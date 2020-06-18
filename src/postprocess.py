@@ -189,62 +189,62 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize):
     for chrom in proc_chroms:
         input_filename = os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"]))
         d = pd.read_csv(input_filename, sep = "\t")
+        if d.shape[0] > 0:
+            #compute pairwise distances
+            d.loc[:,'i'] = (d.loc[:,'x1'] // binsize).astype(int)
+            d.loc[:,'j'] = (d.loc[:,'y1'] // binsize).astype(int)
+            points = d[['i', 'j']].to_numpy()
+            dists = distance.cdist(points, points, 'cityblock')
+            np.fill_diagonal(dists, np.Inf)
+            min_dists = dists.min(axis = 0)
 
-        #compute pairwise distances
-        d.loc[:,'i'] = (d.loc[:,'x1'] // binsize).astype(int)
-        d.loc[:,'j'] = (d.loc[:,'y1'] // binsize).astype(int)
-        points = d[['i', 'j']].to_numpy()
-        dists = distance.cdist(points, points, 'cityblock')
-        np.fill_diagonal(dists, np.Inf)
-        min_dists = dists.min(axis = 0)
+            #separate singletons from cluster peaks
+            singleton_indices = np.where(min_dists > clustering_gap)[0]  
+            singletons = d.iloc[singleton_indices, :]
+            singletons.reset_index(drop = True, inplace = True)
+            clusters = d.drop(singleton_indices, axis = 0).reset_index(drop = True)
 
-        #separate singletons from cluster peaks
-        singleton_indices = np.where(min_dists > clustering_gap)[0]  
-        singletons = d.iloc[singleton_indices, :]
-        singletons.reset_index(drop = True, inplace = True)
-        clusters = d.drop(singleton_indices, axis = 0).reset_index(drop = True)
+            #find labels for cluster peaks
+            points = clusters[['i', 'j']].to_numpy()
+            dists = distance.cdist(points, points, 'cityblock')
+            dists = dists <= clustering_gap
+            label_to_peaks = label_propagate(dists)
 
-        #find labels for cluster peaks
-        points = clusters[['i', 'j']].to_numpy()
-        dists = distance.cdist(points, points, 'cityblock')
-        dists = dists <= clustering_gap
-        label_to_peaks = label_propagate(dists)
+            #form cluster_name column
+            singletons.loc[:,'cluster'] = list(singletons.index)
+            singletons.loc[:,'cluster'] = 'singleton_' + singletons['cluster'].astype(str)
+            singletons.loc[:,'cluster_type'] = 'singleton'
+            singletons.loc[:,'cluster_size'] = 1
+            singletons.loc[:,'neg_log10_fdr'] = -np.log10(singletons['fdr_chrom'])
+            singletons.loc[:,'summit'] = 1
+            clusters.loc[:,'cluster'] = 0
 
-        #form cluster_name column
-        singletons.loc[:,'cluster'] = list(singletons.index)
-        singletons.loc[:,'cluster'] = 'singleton_' + singletons['cluster'].astype(str)
-        singletons.loc[:,'cluster_type'] = 'singleton'
-        singletons.loc[:,'cluster_size'] = 1
-        singletons.loc[:,'neg_log10_fdr'] = -np.log10(singletons['fdr_chrom'])
-        singletons.loc[:,'summit'] = 1
-        clusters.loc[:,'cluster'] = 0
+            for counter, (label, indices) in enumerate(label_to_peaks.items()):
+                clusters.loc[list(indices), 'cluster'] = "cluster_" + str(counter)
+            def compute_cluster_stats(df):
+                df.loc[:,'cluster_size'] = df.shape[0]
+                df.loc[:,'neg_log10_fdr'] = np.sum(-np.log10(df['fdr_chrom']))
+                df.loc[:,'summit'] = 0
+                df.loc[np.argmin(df['fdr_chrom']), 'summit'] = 1
+                return df
+            clusters = clusters.groupby('cluster').apply(compute_cluster_stats)
 
-        for counter, (label, indices) in enumerate(label_to_peaks.items()):
-            clusters.loc[list(indices), 'cluster'] = "cluster_" + str(counter)
-        def compute_cluster_stats(df):
-            df.loc[:,'cluster_size'] = df.shape[0]
-            df.loc[:,'neg_log10_fdr'] = np.sum(-np.log10(df['fdr_chrom']))
-            df.loc[:,'summit'] = 0
-            df.loc[np.argmin(df['fdr_chrom']), 'summit'] = 1
-            return df
-        clusters = clusters.groupby('cluster').apply(compute_cluster_stats)
+            #find broad and sharp peaks
+            clusters = clusters.sort_values('neg_log10_fdr', axis = 0).reset_index(drop = True)
+            temp = pd.DataFrame({'row': list(range(1, clusters.shape[0] + 1)), 'nlfdr': clusters['neg_log10_fdr']})
+            temp.loc[:,'row'] = temp.loc[:,'row'] / max(temp['row'])
+            temp.loc[:,'nlfdr'] = temp.loc[:,'nlfdr'] / max(temp['nlfdr'])
+            rows = temp['row'].copy()
+            temp.loc[:,'row'] = 1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
+            temp.loc[:,'nlfdr'] = -1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
+            temp.loc[:,'new_row'] = list(range(temp.shape[0]))
+            ref_point = temp[temp['nlfdr'] == min(temp['nlfdr'])]['new_row'].iloc[0]
+            ref_value = clusters.iloc[ref_point,:]['neg_log10_fdr']
+            clusters.loc[clusters['neg_log10_fdr'] < ref_value, 'cluster_type'] = 'SharpPeak'
+            clusters.loc[clusters['neg_log10_fdr'] >= ref_value, 'cluster_type'] = 'BroadPeak'
 
-        #find broad and sharp peaks
-        clusters = clusters.sort_values('neg_log10_fdr', axis = 0).reset_index(drop = True)
-        temp = pd.DataFrame({'row': list(range(1, clusters.shape[0] + 1)), 'nlfdr': clusters['neg_log10_fdr']})
-        temp.loc[:,'row'] = temp.loc[:,'row'] / max(temp['row'])
-        temp.loc[:,'nlfdr'] = temp.loc[:,'nlfdr'] / max(temp['nlfdr'])
-        rows = temp['row'].copy()
-        temp.loc[:,'row'] = 1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
-        temp.loc[:,'nlfdr'] = -1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
-        temp.loc[:,'new_row'] = list(range(temp.shape[0]))
-        ref_point = temp[temp['nlfdr'] == min(temp['nlfdr'])]['new_row'].iloc[0]
-        ref_value = clusters.iloc[ref_point,:]['neg_log10_fdr']
-        clusters.loc[clusters['neg_log10_fdr'] < ref_value, 'cluster_type'] = 'SharpPeak'
-        clusters.loc[clusters['neg_log10_fdr'] >= ref_value, 'cluster_type'] = 'BroadPeak'
-
-        final = pd.concat([singletons, clusters], axis = 0, sort = False)
-        final.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), sep = "\t", index = False)
+            final = pd.concat([singletons, clusters], axis = 0, sort = False)
+            final.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), sep = "\t", index = False)
 
 def postprocess(indir, outdir, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
                     candidate_upper_thresh, binsize, dist, clustering_gap, rank, n_proc, max_mem, num_cells):

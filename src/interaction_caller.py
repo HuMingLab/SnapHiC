@@ -176,6 +176,5 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
         d = d.merge(results, left_on = ['x1', 'y1'], right_on = ['i', 'j'], how = "outer")
         d.drop(['i', 'j'], axis =1, inplace = True)
         d.to_csv(os.path.join(outdir, ".".join(["significances", chrom, "bedpe"])), sep = "\t", index = False)   
-    return num_cells
                         
                         

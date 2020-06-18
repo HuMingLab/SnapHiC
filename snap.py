@@ -5,6 +5,8 @@ from src.rwr import get_rwr_for_all
 from src.combine_cells import combine_cells, combine_chrom_hic
 from src.interaction_caller import call_interactions, combine_chrom_interactions
 from src.postprocess import postprocess, combine_postprocessed_chroms
+import glob
+import pandas as pd
 
 def main():
     parser = create_parser()
@@ -63,14 +65,14 @@ def main():
     #step 4; call loops by local neighborhoods
     interaction_dir = os.path.join(args.outdir, "interactions")
     if parallel_mode == 'nonparallel':
-        num_cells = call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
+        call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
                          binsize = args.binsize, dist = args.dist, \
                          neighborhood_limit_lower = args.local_lower_limit, \
                          neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
                          n_proc = n_proc, max_mem = args.max_memory)
     elif parallel_mode == 'parallel':
         properties['comm'].Barrier()
-        num_cells = call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
+        call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
                          binsize = args.binsize, dist = args.dist, \
                          neighborhood_limit_lower = args.local_lower_limit, \
                          neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
@@ -83,6 +85,7 @@ def main():
     #print("loops called")    
     
     #step 5; find candidates and cluster peaks
+    num_cells = pd.read_csv(glob.glob(os.path.join(hic_dir, "*.normalized.combined.bedpe"))[0], sep = "\t").shape[1] - 7
     postproc_dir = os.path.join(args.outdir, "postprocessed")
     if parallel_mode == 'nonparallel':
         postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
