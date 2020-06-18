@@ -33,4 +33,4 @@ candid_upper_dist=900000
 cluster_gap=3
 max_memory=1
 
-mpirun -np $num_processor python3 ./snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --dist $dist --binsize $bin --local-lower-limit $local_neighborhood_lower --local-upper-limit $local_neighborhood_upper --fdr-threshold $fdr_thresh --postproc-gap-large $postproc_gap_large --postproc-gap-small $postproc_gap_small --candidate-lower-distance $candid_lower_dist --candidate-upper-distance $candid_upper_dist --clustering-gap $cluster_gap --max-memory $max_memory
+mpirun -np $num_processor python3 ./snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --dist $dist --binsize $bin --local-lower-limit $local_neighborhood_lower --local-upper-limit $local_neighborhood_upper --fdr-threshold $fdr_thresh --postproc-gap-large $postproc_gap_large --postproc-gap-small $postproc_gap_small --candidate-lower-distance $candid_lower_dist --candidate-upper-distance $candid_upper_dist --clustering-gap $cluster_gap --max-memory $max_memory --parallel

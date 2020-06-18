@@ -13,6 +13,7 @@ Use the following command to run the software:
 ```
 python3 snap.py -i <input-directory> -o <output-directory> -c <column numbers for chromosomes in data> -p <column numbers for read positions in data> -l <chromosome lengths file> -g <genome: human or mouse>
 ```
+Please note that in order to run the code in parallel mode (e.g. in cluster computing systems), you will have to use the `--parallel` argument when calling the software.  
 A complete listing of all the permitted parameters to the software can be seen by using `--help` argument.
 ```
 python3 snap.py --help
