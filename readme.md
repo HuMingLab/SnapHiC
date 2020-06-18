@@ -4,6 +4,7 @@
 Prior to run, please ensure following modules are installed in your python3 environment:
 - numpy
 - scipy
+- statsmodels
 - pandas
 - skimage (scikit-image)
 - networkx
