@@ -50,7 +50,7 @@ def main():
     
     #step 3; combine cells
     hic_dir = os.path.join(args.outdir, "hic")
-    if 'hic' in args.hic:
+    if 'hic' in args.steps:
         if parallel_mode == 'nonparallel':
             combine_cells(indir = rwr_dir, outdir = hic_dir, outlier_threshold = args.outlier, \
                           chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
