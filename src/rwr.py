@@ -5,6 +5,9 @@ import scipy as sp
 import networkx as nx
 import os
 import re
+import sys
+import random
+from collections import deque
 
 
 CHROM_DICT = {"chr19" : 61431566}
@@ -59,7 +62,13 @@ def solve_rwr(stoch_matrix, alpha = ALPHA):
     m = m.transpose()
     y = sp.sparse.spdiags([1] * m.shape[0], 0, m.shape[0], m.shape[0], format = "csc")
     A = y - m
-    s = sp.sparse.linalg.spsolve(A, y)
+    try:
+        s = sp.sparse.linalg.spsolve(A, y)
+    except:
+        A = A.todense()
+        y = y.todense()
+        s = sp.linalg.solve(A, y)
+        s = sp.sparse.csr_matrix(s)
     s *= alpha
     s += s.transpose()
     return s.tocoo()
@@ -98,6 +107,9 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank):
     
     indices = list(range(rank, len(jobs), n_proc))
     proc_jobs = [jobs[i] for i in indices]
+    proc_jobs = deque(proc_jobs)
+    proc_jobs.rotate(rank)
+    proc_jobs = list(proc_jobs)
     return proc_jobs
     
 

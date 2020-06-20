@@ -6,6 +6,8 @@ import pandas as pd
 import skimage
 import subprocess
 from statsmodels.stats.multitest import multipletests
+import gc
+import sys
 
 
 def get_proc_chroms(chrom_lens, rank, n_proc):
@@ -26,7 +28,7 @@ def determine_dense_matrix_size(num_cells, dist, binsize, max_mem):
     max_mem_floats = max_mem * 1e9 
     max_mem_floats /= 8
     square_cells = max_mem_floats // num_cells
-    mat_size = int(np.floor(np.sqrt(square_cells)) / 3)
+    mat_size = int(np.floor(np.sqrt(square_cells)) / 4)
     if mat_size < (dist // binsize):
         raise "Specified " + str(max_mem) + "GB is not enough for constructing dense matrix with distance " + str(dist) + "."
     return mat_size
@@ -63,7 +65,7 @@ def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_l
         
         
 def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index, max_distance_bin):
-    
+    gc.collect()
     #sliding window
     big_neighborhood = skimage.util.view_as_windows(mat, (2*upper_limit+1,2*upper_limit+1,num_cells), step = 1)
     small_neighborhood = skimage.util.view_as_windows(mat, (2*lower_limit+1,2*lower_limit+1,num_cells), step = 1)

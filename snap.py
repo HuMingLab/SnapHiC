@@ -17,100 +17,105 @@ def main():
     
     #step 1; binning
     bin_dir = os.path.join(args.outdir, "binned")
-    if parallel_mode == 'nonparallel':
-        bin_sets(args.indir, args.suffix, binsize = args.binsize, outdir = bin_dir, \
-                 chr_columns = args.chr_columns, pos_columns = args.pos_columns, \
-                 low_cutoff = args.low_cutoff, n_proc = n_proc, rank = rank)
-    elif parallel_mode == 'parallel':
-        bin_sets(args.indir, args.suffix, binsize = args.binsize, outdir = bin_dir, \
-                 chr_columns = args.chr_columns, pos_columns = args.pos_columns, \
-                 low_cutoff = args.low_cutoff, n_proc = n_proc, rank = rank)
-        properties['comm'].Barrier()
-    elif parallel_mode == 'threaded':
-        pass #with open pool, run multithreaded
-    #print("binned")   
+    if 'bin' in args.steps:
+        if parallel_mode == 'nonparallel':
+            bin_sets(args.indir, args.suffix, binsize = args.binsize, outdir = bin_dir, \
+                     chr_columns = args.chr_columns, pos_columns = args.pos_columns, \
+                     low_cutoff = args.low_cutoff, n_proc = n_proc, rank = rank)
+        elif parallel_mode == 'parallel':
+            bin_sets(args.indir, args.suffix, binsize = args.binsize, outdir = bin_dir, \
+                     chr_columns = args.chr_columns, pos_columns = args.pos_columns, \
+                     low_cutoff = args.low_cutoff, n_proc = n_proc, rank = rank)
+            properties['comm'].Barrier()
+        elif parallel_mode == 'threaded':
+            pass #with open pool, run multithreaded
+        #print("binned")   
         
     #step 2; RWR and normalization
     rwr_dir = os.path.join(args.outdir, "rwr")
-    if parallel_mode == 'nonparallel':
-        get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
-                        alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
-                        normalize = False, n_proc = n_proc, rank = rank, genome = args.genome)
-    elif parallel_mode == 'parallel':
-        properties['comm'].Barrier()
-        get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
-                        alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
-                        normalize = False, n_proc = n_proc, rank = rank, genome = args.genome)
-        properties['comm'].Barrier()
-    elif parallel_mode == 'threaded':
-        pass #with open pool, run multithreaded
-    #print("rwr computed")
+    if 'rwr' in args.steps:
+        if parallel_mode == 'nonparallel':
+            get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
+                            alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
+                            normalize = False, n_proc = n_proc, rank = rank, genome = args.genome)
+        elif parallel_mode == 'parallel':
+            properties['comm'].Barrier()
+            get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
+                            alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
+                            normalize = False, n_proc = n_proc, rank = rank, genome = args.genome)
+            properties['comm'].Barrier()
+        elif parallel_mode == 'threaded':
+            pass #with open pool, run multithreaded
+        #print("rwr computed")
     
     #step 3; combine cells
     hic_dir = os.path.join(args.outdir, "hic")
-    if parallel_mode == 'nonparallel':
-        combine_cells(indir = rwr_dir, outdir = hic_dir, outlier_threshold = args.outlier, \
-                      chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
-    elif parallel_mode == 'parallel':
-        properties['comm'].Barrier()
-        combine_cells(indir = rwr_dir, outdir = hic_dir, outlier_threshold = args.outlier, \
-                      chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
-        properties['comm'].Barrier()
-    elif parallel_mode == 'threaded':
-        pass #with open pool, run multithreaded
-    if rank == 0:
-        combine_chrom_hic(directory = hic_dir)
-    #print("combined") 
+    if 'hic' in args.hic:
+        if parallel_mode == 'nonparallel':
+            combine_cells(indir = rwr_dir, outdir = hic_dir, outlier_threshold = args.outlier, \
+                          chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
+        elif parallel_mode == 'parallel':
+            properties['comm'].Barrier()
+            combine_cells(indir = rwr_dir, outdir = hic_dir, outlier_threshold = args.outlier, \
+                          chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
+            properties['comm'].Barrier()
+        elif parallel_mode == 'threaded':
+            pass #with open pool, run multithreaded
+        if rank == 0:
+            combine_chrom_hic(directory = hic_dir)
+        #print("combined") 
     
     #step 4; call loops by local neighborhoods
     interaction_dir = os.path.join(args.outdir, "interactions")
-    if parallel_mode == 'nonparallel':
-        call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
-                         binsize = args.binsize, dist = args.dist, \
-                         neighborhood_limit_lower = args.local_lower_limit, \
-                         neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
-                         n_proc = n_proc, max_mem = args.max_memory)
-    elif parallel_mode == 'parallel':
-        properties['comm'].Barrier()
-        call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
-                         binsize = args.binsize, dist = args.dist, \
-                         neighborhood_limit_lower = args.local_lower_limit, \
-                         neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
-                         n_proc = n_proc, max_mem = args.max_memory)
-        properties['comm'].Barrier()
-    elif parallel_mode == 'threaded':
-        pass #with open pool, run multithreaded
-    if rank == 0:
-        combine_chrom_interactions(directory = interaction_dir)
-    #print("loops called")    
+    if 'interaction' in args.steps:
+        if parallel_mode == 'nonparallel':
+            call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
+                             binsize = args.binsize, dist = args.dist, \
+                             neighborhood_limit_lower = args.local_lower_limit, \
+                             neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
+                             n_proc = n_proc, max_mem = args.max_memory)
+        elif parallel_mode == 'parallel':
+            properties['comm'].Barrier()
+            call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
+                             binsize = args.binsize, dist = args.dist, \
+                             neighborhood_limit_lower = args.local_lower_limit, \
+                             neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
+                             n_proc = n_proc, max_mem = args.max_memory)
+            properties['comm'].Barrier()
+        elif parallel_mode == 'threaded':
+            pass #with open pool, run multithreaded
+        if rank == 0:
+            combine_chrom_interactions(directory = interaction_dir)
+        #print("loops called")    
     
     #step 5; find candidates and cluster peaks
     num_cells = pd.read_csv(glob.glob(os.path.join(hic_dir, "*.normalized.combined.bedpe"))[0], sep = "\t").shape[1] - 7
     postproc_dir = os.path.join(args.outdir, "postprocessed")
-    if parallel_mode == 'nonparallel':
-        postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
-                    fdr_thresh = args.fdr_threshold, gap_large = args.postproc_gap_large, \
-                    gap_small = args.postproc_gap_small, candidate_lower_thresh = args.candidate_lower_distance, \
-                    candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
-                    dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
-                    n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells)
-    elif parallel_mode == 'parallel':
-        properties['comm'].Barrier()
-        postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
-                    fdr_thresh = args.fdr_threshold, gap_large = args.postproc_gap_large, \
-                    gap_small = args.postproc_gap_small, candidate_lower_thresh = args.candidate_lower_distance, \
-                    candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
-                    dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
-                    n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells)
-        properties['comm'].Barrier()
-    elif parallel_mode == 'threaded':
-        pass #with open pool, run multithreaded
-    if rank == 0:
-        combine_postprocessed_chroms(directory = postproc_dir)
-    #print("postprocessed")
+    if 'postprocess' in args.steps:
+        if parallel_mode == 'nonparallel':
+            postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
+                        fdr_thresh = args.fdr_threshold, gap_large = args.postproc_gap_large, \
+                        gap_small = args.postproc_gap_small, candidate_lower_thresh = args.candidate_lower_distance, \
+                        candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
+                        dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
+                        n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells)
+        elif parallel_mode == 'parallel':
+            properties['comm'].Barrier()
+            postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
+                        fdr_thresh = args.fdr_threshold, gap_large = args.postproc_gap_large, \
+                        gap_small = args.postproc_gap_small, candidate_lower_thresh = args.candidate_lower_distance, \
+                        candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
+                        dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
+                        n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells)
+            properties['comm'].Barrier()
+        elif parallel_mode == 'threaded':
+            pass #with open pool, run multithreaded
+        if rank == 0:
+            combine_postprocessed_chroms(directory = postproc_dir)
+        #print("postprocessed")
 
 def parse_chrom_lengths(chrom, chrom_lens_filename, genome):
-    if not chrom:
+    if not chrom or chrom == "None":
         chrom_count = 22 if genome == 'human' else 19 if genome == "mouse" else None
         if not chrom_count:
             raise("Genome name is not recognized")
@@ -201,6 +206,8 @@ def create_parser():
                         help = 'number of allowed gaps between peaks in same cluster')
     parser.add_argument('--max-memory', default = 2, type = float, required = False, \
                         help = 'memory available in GB, that will be used in constructing dense matrices')
+    parser.add_argument('--steps', nargs = "*", default = ['bin','rwr','hic','interaction','postprocess'], \
+                        required = False, help = 'steps to run. default is all steps.', 
     return parser
     
 
