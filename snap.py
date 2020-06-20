@@ -207,7 +207,8 @@ def create_parser():
     parser.add_argument('--max-memory', default = 2, type = float, required = False, \
                         help = 'memory available in GB, that will be used in constructing dense matrices')
     parser.add_argument('--steps', nargs = "*", default = ['bin','rwr','hic','interaction','postprocess'], \
-                        required = False, help = 'steps to run. default is all steps.', 
+                        required = False, help = 'steps to run. Combination of bin,rwr,hic,interaction, and ' +\
+                        'postprocess are accepted (no comma, space separated). Default is all steps.') 
     return parser
     
 
