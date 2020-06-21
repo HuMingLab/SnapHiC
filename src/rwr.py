@@ -135,7 +135,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         pass
 
     processor_jobs = determine_proc_share(indir, chrom_lens, n_proc, rank)
-    retry_filename = '_'.join([str(rank), "retry", "instances"] + ".txt"
+    retry_filename = '_'.join([str(rank), "retry", "instances"]) + ".txt"
     attempt_counter = 0
     attempts_allowed = 10
     while len(processor_jobs > 0):
