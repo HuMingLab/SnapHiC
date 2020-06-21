@@ -8,6 +8,7 @@ import re
 import sys
 import random
 from collections import deque
+import gc
 
 
 CHROM_DICT = {"chr19" : 61431566}
@@ -24,6 +25,7 @@ edge_filename = "/Users/abnousa/data/single_cell/snap_hic/data/inputs/miao_mESC_
 
 #@profile
 def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], alpha = ALPHA):
+    gc.collect()
     edgelist = pd.read_csv(edge_filename, sep = "\t", header = None, names = ["chr1", "x1", "x2", "chr2", "y1", "y2"])
     edgelist = edgelist[(edgelist['chr1'] == chrom) & (edgelist['chr1'] == edgelist['chr2'])]
     edgelist = bin_matrix(edgelist, binsize)
@@ -50,6 +52,7 @@ def bin_matrix(df, binsize):
 
 
 def get_stochastic_matrix_from_edgelist(edgelist):
+    gc.collect()
     g = nx.from_pandas_edgelist(edgelist, source = 'x1', target = 'y1', edge_attr = ['weight'], create_using = nx.Graph())
     degrees = np.array([g.degree(i) for i in g.nodes()])
     m = sp.sparse.csc_matrix(nx.adjacency_matrix(g).astype(float))
@@ -58,6 +61,7 @@ def get_stochastic_matrix_from_edgelist(edgelist):
 
 
 def solve_rwr(stoch_matrix, alpha = ALPHA):
+    gc.collect()
     m = stoch_matrix*(1-alpha)
     m = m.transpose()
     y = sp.sparse.spdiags([1] * m.shape[0], 0, m.shape[0], m.shape[0], format = "csc")
