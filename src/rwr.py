@@ -135,7 +135,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         pass
 
     processor_jobs = determine_proc_share(indir, chrom_lens, n_proc, rank)
-    retry_filename = '_'.join([str(rank), "retry", "instances"]) + ".txt"
+    retry_filename = os.path.join(outdir, ('_'.join([str(rank), "retry", "instances"]) + ".txt"))
     attempt_counter = 0
     attempts_allowed = 10
     while len(processor_jobs > 0):
@@ -145,7 +145,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
             df = get_rwr(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], alpha = alpha)
             if isinstance(df, str) and df == "try_later":
                 with open(retry_filename, 'a') as ofile:
-                    ofile.write("\t".join([chrom, filename, setname] + "\n")
+                    ofile.write("\t".join([chrom, filename, setname]) + "\n")
                 continue
             output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "bedpe"]))
             df.sort_values(['x1', 'y1'], inplace = True)
