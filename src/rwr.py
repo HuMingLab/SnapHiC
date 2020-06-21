@@ -165,6 +165,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
             os.remove(retry_filename)
             attempt_counter += 1
         except:
+            processor_jobs = []
             print("rank", rank, ": no remaining jobs or parser failed")
             sys.stdout.flush()
 
