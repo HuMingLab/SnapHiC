@@ -37,7 +37,7 @@ def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DI
     
     g = get_stochastic_matrix_from_edgelist(edges)
     r = solve_rwr(g, alpha, final_try)
-    if r.isinstance(str) and r == "try_later":
+    if isinstance(r, str) and r == "try_later":
         return r
 
     df = reformat_sparse_matrix(r, binsize, distance)
