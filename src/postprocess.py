@@ -156,9 +156,18 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
         
 def combine_postprocessed_chroms(directory):
+    headers = "\t".join(["chr1","x1","x2","chr2","y1","y2","outlier_count",\
+                         "pvalue","fdr_chrom","fdr_dist","case_avg","control_avg",\
+                         "local","lower_left","donut","horizontal","vertical",\
+                         "cluster","cluster_type","cluster_size","neg_log10_fdr","summit"])
+    output_filename_temp = os.path.join(directory, "combined.postprocessed.bedpe.temp")
     output_filename = os.path.join(directory, "combined.postprocessed.bedpe")
     input_filepattern = directory + '/clustered.candidates.*.bedpe'
-    proc = subprocess.Popen('cat ' + input_filepattern + ' > ' + output_filename, shell = True)
+    proc = subprocess.Popen("awk 'FNR>1' " + input_filepattern + ' > ' + output_filename_temp, shell = True)
+    proc.communicate()
+    with open(output_filename, 'w') as ofile:
+        ofile.write(headers + "\n")
+    proc = subprocess.Popen(" ".join(["cat",output_filename_temp,">>",output_filename]), shell = True)
     proc.communicate()
     d = pd.read_csv(output_filename, sep = "\t")
     d = d[d['summit'] == 1]
@@ -244,6 +253,7 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize):
             clusters.loc[clusters['neg_log10_fdr'] >= ref_value, 'cluster_type'] = 'BroadPeak'
 
             final = pd.concat([singletons, clusters], axis = 0, sort = False)
+            final.drop(["i", "j"], axis = 1, inplace = True)
             final.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), sep = "\t", index = False)
 
 def postprocess(indir, outdir, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \

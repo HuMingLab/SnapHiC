@@ -37,12 +37,12 @@ def main():
         if parallel_mode == 'nonparallel':
             get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
-                            normalize = False, n_proc = n_proc, rank = rank, genome = args.genome)
+                            normalize = True, n_proc = n_proc, rank = rank, genome = args.genome)
         elif parallel_mode == 'parallel':
             properties['comm'].Barrier()
             get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
-                            normalize = False, n_proc = n_proc, rank = rank, genome = args.genome)
+                            normalize = True, n_proc = n_proc, rank = rank, genome = args.genome)
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
             pass #with open pool, run multithreaded

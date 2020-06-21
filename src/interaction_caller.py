@@ -19,9 +19,16 @@ def get_proc_chroms(chrom_lens, rank, n_proc):
     return proc_chroms
 
 def combine_chrom_interactions(directory):
+    headers = "\t".join(["chr1", "x1", "x2","chr2","y1","y2","outlier_count",\
+                         "case_avg","control_avg","pvalue","fdr_dist","fdr_chrom"])
+    output_filename_temp = os.path.join(directory, "combined_significances.bedpe.temp")
     output_filename = os.path.join(directory, "combined_significances.bedpe")
     input_filepattern = directory + '/significances.*.bedpe'
-    proc = subprocess.Popen('cat ' + input_filepattern + ' > ' + output_filename, shell = True)
+    proc = subprocess.Popen("awk 'FNR>1' " + input_filepattern + ' > ' + output_filename_temp, shell = True)
+    proc.communicate()
+    with open(output_filename, 'w') as ofile:
+        ofile.write(headers + "\n")
+    proc = subprocess.Popen(" ".join(["cat",output_filename_temp,">>",output_filename]), shell = True)
     proc.communicate()
 
 def determine_dense_matrix_size(num_cells, dist, binsize, max_mem):

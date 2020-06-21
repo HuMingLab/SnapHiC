@@ -7,7 +7,7 @@ import glob
 import numpy as np
 
 def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold):
-    input_filepattern = indir + '/*' + chrom + '.*.bedpe'
+    input_filepattern = indir + '/*' + chrom + '.normalized.rwr.bedpe'
     input_filenames = glob.glob(input_filepattern)
     #print(input_filenames)
     

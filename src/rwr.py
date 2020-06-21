@@ -126,13 +126,14 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
     for chrom, filename, setname in processor_jobs:
         filepath = os.path.join(indir, filename)
         df = get_rwr(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], alpha = alpha)
+        output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "bedpe"]))
+        df.sort_values(['x1', 'y1'], inplace = True)
+        df.to_csv(output_filename, sep = "\t", header = None, index = False)
         if normalize:
             output_filename = os.path.join(outdir, ".".join([setname, chrom, "normalized", "rwr", "bedpe"]))
             df = df.groupby(df['y1'] - df['x1'], as_index = False).apply(normalize_along_diagonal).reset_index(drop = True)
-        else:
-            output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "bedpe"]))
-        df.sort_values(['x1', 'y1'], inplace = True)
-        df.to_csv(output_filename, sep = "\t", header = None, index = False)
+            df.sort_values(['x1', 'y1'], inplace = True)
+            df.to_csv(output_filename, sep = "\t", header = None, index = False)
 
 if __name__ == "__main__":
     get_rwr_for_all(INDIR, normalize = True)
