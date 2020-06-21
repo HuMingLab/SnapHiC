@@ -24,7 +24,7 @@ edge_filename = "/Users/abnousa/data/single_cell/snap_hic/data/inputs/miao_mESC_
 # In[3]:
 
 #@profile
-def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], alpha = ALPHA):
+def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], alpha = ALPHA, final_try = False):
     gc.collect()
     edgelist = pd.read_csv(edge_filename, sep = "\t", header = None, names = ["chr1", "x1", "x2", "chr2", "y1", "y2"])
     edgelist = edgelist[(edgelist['chr1'] == chrom) & (edgelist['chr1'] == edgelist['chr2'])]
@@ -36,7 +36,9 @@ def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DI
     edges.loc[:,'weight'] = 1
     
     g = get_stochastic_matrix_from_edgelist(edges)
-    r = solve_rwr(g, alpha)
+    r = solve_rwr(g, alpha, final_try)
+    if r.isinstance(str) and r == "try_later":
+        return r
 
     df = reformat_sparse_matrix(r, binsize, distance)
     df.loc[:,'chr1'] = chrom
@@ -60,7 +62,7 @@ def get_stochastic_matrix_from_edgelist(edgelist):
     return m
 
 
-def solve_rwr(stoch_matrix, alpha = ALPHA):
+def solve_rwr(stoch_matrix, alpha = ALPHA, final_try = False):
     gc.collect()
     m = stoch_matrix*(1-alpha)
     m = m.transpose()
@@ -73,6 +75,11 @@ def solve_rwr(stoch_matrix, alpha = ALPHA):
         y = y.todense()
         s = sp.linalg.solve(A, y)
         s = sp.sparse.csr_matrix(s)
+    finally:
+        if final_try:
+            raise Exception("Cannot allocate enough memory of solving RWR")
+        else:
+            return "try_later"
     s *= alpha
     s += s.transpose()
     return s.tocoo()
@@ -111,9 +118,10 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank):
     
     indices = list(range(rank, len(jobs), n_proc))
     proc_jobs = [jobs[i] for i in indices]
-    proc_jobs = deque(proc_jobs)
-    proc_jobs.rotate(rank)
-    proc_jobs = list(proc_jobs)
+    #proc_jobs = deque(proc_jobs)
+    #proc_jobs.rotate(rank)
+    #proc_jobs = list(proc_jobs)
+    random.shuffle(proc_jobs)
     return proc_jobs
     
 
@@ -127,17 +135,38 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         pass
 
     processor_jobs = determine_proc_share(indir, chrom_lens, n_proc, rank)
-    for chrom, filename, setname in processor_jobs:
-        filepath = os.path.join(indir, filename)
-        df = get_rwr(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], alpha = alpha)
-        output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "bedpe"]))
-        df.sort_values(['x1', 'y1'], inplace = True)
-        df.to_csv(output_filename, sep = "\t", header = None, index = False)
-        if normalize:
-            output_filename = os.path.join(outdir, ".".join([setname, chrom, "normalized", "rwr", "bedpe"]))
-            df = df.groupby(df['y1'] - df['x1'], as_index = False).apply(normalize_along_diagonal).reset_index(drop = True)
+    retry_filename = '_'.join([str(rank), "retry", "instances"] + ".txt"
+    attempt_counter = 0
+    attempts_allowed = 10
+    while len(processor_jobs > 0):
+        for chrom, filename, setname in processor_jobs:
+            filepath = os.path.join(indir, filename)
+            final_try = False if attempt_counter < attempts_allowed else True
+            df = get_rwr(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], alpha = alpha)
+            if isinstance(df, str) and df == "try_later":
+                with open(retry_filename, 'a') as ofile:
+                    ofile.write("\t".join([chrom, filename, setname] + "\n")
+                continue
+            output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "bedpe"]))
             df.sort_values(['x1', 'y1'], inplace = True)
             df.to_csv(output_filename, sep = "\t", header = None, index = False)
+            if normalize:
+                output_filename = os.path.join(outdir, ".".join([setname, chrom, "normalized", "rwr", "bedpe"]))
+                df = df.groupby(df['y1'] - df['x1'], as_index = False).apply(normalize_along_diagonal).reset_index(drop = True)
+                df.sort_values(['x1', 'y1'], inplace = True)
+                df.to_csv(output_filename, sep = "\t", header = None, index = False)
+        try:
+            print("rank", rank, ": attempting to rerun failed jobs. Attempt #", attempt_counter + 1)
+            sys.stdout.flush()
+            with open(retry_filename, 'r') as infile:
+                jobs = infile.readlines()
+            jobs = [line.split() for line in jobs]
+            processor_jobs = jobs
+            os.remove(retry_filename)
+            attempt_counter += 1
+        except:
+            print("rank", rank, ": no remaining jobs or parser failed")
+            sys.stdout.flush()
 
 if __name__ == "__main__":
     get_rwr_for_all(INDIR, normalize = True)
