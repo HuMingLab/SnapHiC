@@ -71,15 +71,16 @@ def solve_rwr(stoch_matrix, alpha = ALPHA, final_try = False):
     try:
         s = sp.sparse.linalg.spsolve(A, y)
     except:
-        A = A.todense()
-        y = y.todense()
-        s = sp.linalg.solve(A, y)
-        s = sp.sparse.csr_matrix(s)
-    finally:
-        if final_try:
-            raise Exception("Cannot allocate enough memory of solving RWR")
-        else:
-            return "try_later"
+        try:
+            A = A.todense()
+            y = y.todense()
+            s = sp.linalg.solve(A, y)
+            s = sp.sparse.csr_matrix(s)
+        except:
+            if final_try:
+                raise Exception("Cannot allocate enough memory of solving RWR")
+            else:
+                return "try_later"
     s *= alpha
     s += s.transpose()
     return s.tocoo()
