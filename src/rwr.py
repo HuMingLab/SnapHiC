@@ -138,7 +138,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
     retry_filename = os.path.join(outdir, ('_'.join([str(rank), "retry", "instances"]) + ".txt"))
     attempt_counter = 0
     attempts_allowed = 10
-    while len(processor_jobs > 0):
+    while len(processor_jobs) > 0:
         for chrom, filename, setname in processor_jobs:
             filepath = os.path.join(indir, filename)
             final_try = False if attempt_counter < attempts_allowed else True
