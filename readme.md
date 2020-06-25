@@ -84,4 +84,8 @@ optional arguments:
   --max-memory MAX_MEMORY
                         memory available in GB, that will be used in
                         constructing dense matrices
+  --steps [STEPS [STEPS ...]]
+                        steps to run. Combination of bin,rwr,hic,interaction,
+                        and postprocess are accepted (no comma, space
+                        separated). Default is all steps.
 ```
