@@ -28,7 +28,12 @@ def main():
                      low_cutoff = args.low_cutoff, n_proc = n_proc, rank = rank)
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
-            pass #with open pool, run multithreaded
+            def threaded_call(rank):
+                bin_sets(args.indir, args.suffix, binsize = args.binsize, outdir = bin_dir, \
+                     chr_columns = args.chr_columns, pos_columns = args.pos_columns, \
+                     low_cutoff = args.low_cutoff, n_proc = n_proc, rank = rank)
+            with Pool(n_proc) as pool:
+                pool.map(threaded_call, range(n_proc))
         #print("binned")   
         
     #step 2; RWR and normalization
@@ -45,7 +50,12 @@ def main():
                             normalize = True, n_proc = n_proc, rank = rank, genome = args.genome)
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
-            pass #with open pool, run multithreaded
+            def threaded_call(rank):
+                get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
+                            alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
+                            normalize = True, n_proc = n_proc, rank = rank, genome = args.genome)
+            with Pool(n_proc) as pool:
+                pool.map(threaded_call, range(n_proc))
         #print("rwr computed")
     
     #step 3; combine cells
@@ -60,7 +70,11 @@ def main():
                           chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
-            pass #with open pool, run multithreaded
+            def threaded_call(rank):
+                combine_cells(indir = rwr_dir, outdir = hic_dir, outlier_threshold = args.outlier, \
+                          chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
+            with Pool(n_proc) as pool:
+                pool.map(threaded_call, range(n_proc))
         if rank == 0:
             combine_chrom_hic(directory = hic_dir)
         #print("combined") 
@@ -83,7 +97,14 @@ def main():
                              n_proc = n_proc, max_mem = args.max_memory)
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
-            pass #with open pool, run multithreaded
+            def threaded_call(rank):
+                call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
+                             binsize = args.binsize, dist = args.dist, \
+                             neighborhood_limit_lower = args.local_lower_limit, \
+                             neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
+                             n_proc = n_proc, max_mem = args.max_memory)
+            with Pool(n_proc) as pool:
+                pool.map(threaded_call, range(n_proc))
         if rank == 0:
             combine_chrom_interactions(directory = interaction_dir)
         #print("loops called")    
@@ -109,7 +130,15 @@ def main():
                         n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells)
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
-            pass #with open pool, run multithreaded
+            def threaded_call(rank):
+                postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
+                        fdr_thresh = args.fdr_threshold, gap_large = args.postproc_gap_large, \
+                        gap_small = args.postproc_gap_small, candidate_lower_thresh = args.candidate_lower_distance, \
+                        candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
+                        dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
+                        n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells)
+            with Pool(n_proc) as pool:
+                pool.map(threaded_call, range(n_proc))
         if rank == 0:
             combine_postprocessed_chroms(directory = postproc_dir)
         #print("postprocessed")
@@ -143,6 +172,8 @@ def determine_parallelization_options(parallel, threaded, n_proc):
             properties = {'comm': comm}
         elif threaded:
             from multiprocessing import Pool
+            if n_proc < 1:
+                raise Exception('if threaded flag is set, n should be a positive integer')
             n_proc = n_proc
             mode = 'threaded'
             rank = 0
@@ -185,7 +216,7 @@ def create_parser():
     parser.add_argument('--threaded', action = 'store_true', default = False, \
                         help = 'if set, will attempt to use multiprocessing on single machine', required = False)
     parser.add_argument('-n', '--num-proc', help = 'number of processes used in threaded mode',
-                        required = False, default = 1, type = int)
+                        required = False, default = 0, type = int)
     parser.add_argument('--outlier', required = False, default = 0.97500211, type = float, \
                         help = 'percentage threshold for finding outliers.')
     parser.add_argument('--local-lower-limit', default = 3, type = int, required = False, \

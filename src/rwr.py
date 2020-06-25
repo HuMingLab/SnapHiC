@@ -37,10 +37,12 @@ def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DI
     
     g = get_stochastic_matrix_from_edgelist(edges)
     r = solve_rwr(g, alpha, final_try)
+    del g
     if isinstance(r, str) and r == "try_later":
         return r
 
     df = reformat_sparse_matrix(r, binsize, distance)
+    del r
     df.loc[:,'chr1'] = chrom
     df.loc[:,'chr2'] = chrom
     df = df[['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'value']]
@@ -71,22 +73,32 @@ def solve_rwr(stoch_matrix, alpha = ALPHA, final_try = False):
     try:
         s = sp.sparse.linalg.spsolve(A, y)
     except:
+        print("sparse solver failed. trying dense solver.")
+        sys.stdout.flush()
+        gc.collect()
         try:
             A = A.todense()
             y = y.todense()
             s = sp.linalg.solve(A, y)
             s = sp.sparse.csr_matrix(s)
         except:
+            print('dense solver failed too. will retry later?')
+            sys.stdout.flush()
             if final_try:
+                print('raising exception')
+                sys.stdout.flush()
                 raise Exception("Cannot allocate enough memory of solving RWR")
             else:
+                gc.collect()
                 return "try_later"
     s *= alpha
     s += s.transpose()
+    gc.collect()
     return s.tocoo()
 
 
 def reformat_sparse_matrix(m, binsize, distance):
+    gc.collect()
     max_bin_distance = distance // binsize
     df = pd.DataFrame({'x1':m.row, 'y1':m.col, 'value':m.data})
     df = df[((df['y1'] - df['x1']) <= max_bin_distance) & ((df['y1'] - df['x1']) > 0)]
@@ -119,10 +131,10 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank):
     
     indices = list(range(rank, len(jobs), n_proc))
     proc_jobs = [jobs[i] for i in indices]
-    #proc_jobs = deque(proc_jobs)
-    #proc_jobs.rotate(rank)
-    #proc_jobs = list(proc_jobs)
-    random.shuffle(proc_jobs)
+    proc_jobs = deque(proc_jobs)
+    proc_jobs.rotate(rank)
+    proc_jobs = list(proc_jobs)
+    #random.shuffle(proc_jobs)
     return proc_jobs
     
 
@@ -139,14 +151,23 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
     retry_filename = os.path.join(outdir, ('_'.join([str(rank), "retry", "instances"]) + ".txt"))
     attempt_counter = 0
     attempts_allowed = 10
+    print(rank, [(name[0], name[2]) for name in processor_jobs])
+    sys.stdout.flush()
     while len(processor_jobs) > 0:
         for chrom, filename, setname in processor_jobs:
+            gc.collect()
+            print('running', rank, chrom, setname)
+            sys.stdout.flush()
             filepath = os.path.join(indir, filename)
             final_try = False if attempt_counter < attempts_allowed else True
             df = get_rwr(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], alpha = alpha)
             if isinstance(df, str) and df == "try_later":
+                print ("attempting to add to the remainder")
+                sys.stdout.flush()
                 with open(retry_filename, 'a') as ofile:
                     ofile.write("\t".join([chrom, filename, setname]) + "\n")
+                print('written to file',chrom, setname, "from", rank)
+                sys.stdout.flush()
                 continue
             output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "bedpe"]))
             df.sort_values(['x1', 'y1'], inplace = True)

@@ -231,10 +231,10 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize):
             for counter, (label, indices) in enumerate(label_to_peaks.items()):
                 clusters.loc[list(indices), 'cluster'] = "cluster_" + str(counter)
             def compute_cluster_stats(df):
-                df.loc[:,'cluster_size'] = df.shape[0]
-                df.loc[:,'neg_log10_fdr'] = np.sum(-np.log10(df['fdr_chrom']))
-                df.loc[:,'summit'] = 0
-                df.loc[np.argmin(df['fdr_chrom']), 'summit'] = 1
+                df['cluster_size'] = df.shape[0]
+                df.loc[:,'neg_log10_fdr'] = np.sum(-np.log10(df.loc[:,'fdr_chrom']))
+                df['summit'] = 0
+                df.loc[df['fdr_chrom'].idxmin(),'summit'] = 1
                 return df
             clusters = clusters.groupby('cluster').apply(compute_cluster_stats)
 
