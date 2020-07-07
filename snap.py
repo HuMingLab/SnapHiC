@@ -12,6 +12,10 @@ import multiprocessing
 def main():
     parser = create_parser()
     args = parser.parse_args()
+    print(args.filter_file)
+    with open(args.filter_file) as ifile:
+        lines = ifile.readlines()
+    print(lines[0])
     parallel_mode, rank, n_proc, properties = determine_parallelization_options(args.parallel, args.threaded, args.num_proc)
     chrom_dict = parse_chrom_lengths(args.chrom, args.chr_lens, args.genome)
     print(parallel_mode)    
@@ -111,7 +115,15 @@ def main():
                         gap_small = args.postproc_gap_small, candidate_lower_thresh = args.candidate_lower_distance, \
                         candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
                         dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
-                        n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells)
+                        n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells, \
+                        case_to_control_diff_threshold = args.case_control_diff, \
+                        circle_threshold_mult = args.circle_threshold_multiplier, \
+                        donut_threshold_mult = args.donut_threshold_multiplier, \
+                        lower_left_threshold_mult = args.lower_left_threshold_multiplier, \
+                        horizontal_threshold_mult = args.horizontal_threshold_multiplier, \
+                        vertical_threshold_mult = args.vertical_threshold_multiplier, \
+                        outlier_threshold_mult = args.outlier_threshold_multiplier, filter_file = args.filter_file, \
+                        summit_gap = args.summit_gap)
         elif parallel_mode == 'parallel':
             properties['comm'].Barrier()
             postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
@@ -119,13 +131,25 @@ def main():
                         gap_small = args.postproc_gap_small, candidate_lower_thresh = args.candidate_lower_distance, \
                         candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
                         dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
-                        n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells)
+                        n_proc = n_proc, max_mem = args.max_memory, num_cells = num_cells, \
+                        case_to_control_diff_threshold = args.case_control_diff, \
+                        circle_threshold_mult = args.circle_threshold_multiplier, \
+                        donut_threshold_mult = args.donut_threshold_multiplier, \
+                        lower_left_threshold_mult = args.lower_left_threshold_multiplier, \
+                        horizontal_threshold_mult = args.horizontal_threshold_multiplier, \
+                        vertical_threshold_mult = args.vertical_threshold_multiplier, \
+                        outlier_threshold_mult = args.outlier_threshold_multiplier, filter_file = args.filter_file, \
+                        summit_gap = args.summit_gap)
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
             params = [(interaction_dir, postproc_dir, chrom_dict, args.fdr_threshold, args.postproc_gap_large, \
                         args.postproc_gap_small, args.candidate_lower_distance, \
                         args.candidate_upper_distance, args.binsize, args.dist, args.clustering_gap, \
-                        i, n_proc, args.max_memory, num_cells) for i in range(n_proc)]
+                        i, n_proc, args.max_memory, num_cells, args.case_control_diff, \
+                        args.circle_threshold_multiplier, args.donut_threshold_multiplier, \
+                        args.lower_left_threshold_multiplier, args.horizontal_threshold_multiplier, \
+                        args.vertical_threshold_multiplier, args.outlier_threshold_multiplier, \
+                        args.filter_file, args.summit_gap) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
                 pool.map(postprocess, params)
         if rank == 0:
@@ -208,6 +232,8 @@ def create_parser():
                         required = False, default = 0, type = int)
     parser.add_argument('--outlier', required = False, default = 0.97500211, type = float, \
                         help = 'percentage threshold for finding outliers.')
+    parser.add_argument('--case-control-diff', default = 0.4, type = float, required = False,
+                        help = 'difference threshold for case mean to control mean for finding candidates')
     parser.add_argument('--local-lower-limit', default = 3, type = int, required = False, \
                         help = 'number of bins around center (in each direction) to exlude from neighborhood')
     parser.add_argument('--local-upper-limit', default = 5, type = int, required = False, \
@@ -222,13 +248,29 @@ def create_parser():
                        help = 'lower threshold for distance between candidate peak binpairs')
     parser.add_argument('--candidate-upper-distance', default = 900000, type = int, required = False, \
                        help = 'upper threshold for distance between candidate peak binpairs')
+    parser.add_argument('--circle-threshold-multiplier', default = 1.33, type = float, required = False, \
+                        help = 'multiplier for circle filter threshold used in finding candidates')
+    parser.add_argument('--donut-threshold-multiplier', default = 1.33, type = float, required = False, \
+                        help = 'multiplier for donut filter threshold used in finding candidates')
+    parser.add_argument('--lower-left-threshold-multiplier', default = 1.33, type = float, required = False, \
+                        help = 'multiplier for lowerleft filter threshold used in finding candidates')
+    parser.add_argument('--horizontal-threshold-multiplier', default = 1.2, type = float, required = False, \
+                        help = 'multiplier for horizontal filter threshold used in finding candidates')
+    parser.add_argument('--vertical-threshold-multiplier', default = 1.2, type = float, required = False, \
+                        help = 'multiplier for vertical filter threshold used in finding candidates')
+    parser.add_argument('--outlier-threshold-multiplier', default = 0.1, type = float, required = False, \
+                        help = 'multiplier for number of outlier cells for threshold used in finding candidates')
+    parser.add_argument('--summit-gap', default = 10000, type = int, required = False,
+                        help = 'disallowed distance between summit points of a cluster')
+    parser.add_argument('--filter-file', default = None, required = False, \
+                        help = "bed file of regions to be filtered. Regions should be binned")
     parser.add_argument('--clustering-gap', default = 3, type = int, required = False, \
                         help = 'number of allowed gaps between peaks in same cluster')
     parser.add_argument('--max-memory', default = 2, type = float, required = False, \
                         help = 'memory available in GB, that will be used in constructing dense matrices')
     parser.add_argument('--steps', nargs = "*", default = ['bin','rwr','hic','interaction','postprocess'], \
                         required = False, help = 'steps to run. Combination of bin,rwr,hic,interaction, and ' +\
-                        'postprocess are accepted (no comma, space separated). Default is all steps.') 
+                        'postprocess are accepted (no comma, space separated). Default is all steps.')
     return parser
     
 

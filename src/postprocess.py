@@ -116,7 +116,9 @@ def apply_all_filters(mat, footprints, candidates, start_index, max_distance_bin
     return pd.DataFrame(empty_dict)
 
 def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
-                    candidate_upper_thresh, binsize, dist, max_mem, num_cells):
+                    candidate_upper_thresh, binsize, dist, max_mem, num_cells, case_to_control_diff_threshold, \
+                    circle_threshold_mult, donut_threshold_mult, lower_left_threshold_mult, \
+                    horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file):
     footprints = create_filters(gap_large, gap_small)
     matrix_max_size = determine_dense_matrix_size(dist, binsize, max_mem, len(footprints))
     for chrom in proc_chroms:
@@ -125,9 +127,9 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
         candidates = d[(d['y1'] - d['x1'] <= candidate_upper_thresh) & \
                    (d['y1'] - d['x1'] >= candidate_lower_thresh) & \
                    (d['case_avg'] > 0) & \
-                   (d['control_avg'] < d['case_avg']) & \
+                   (d['case_avg'] - d['control_avg'] > case_to_control_diff_threshold) & \
                    (d['fdr_dist'] < fdr_thresh) &\
-                   (d['outlier_count'] > 0.1*num_cells)]
+                   (d['outlier_count'] > outlier_threshold_mult*num_cells)]
         #print("candidates")
         #print(candidates.shape)
         #print(fdr_thresh)
@@ -148,17 +150,34 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
         results = pd.concat(results, axis = 0, sort = False)
         try:
             results.drop(['i', 'j', 'temp_i', 'temp_j'], axis =1, inplace = True)
+            results['circle'] = results[['lower_left', 'donut', 'horizontal', 'vertical']].sum(axis = 1)
         except:
             #if there are no candidates found for any of the iterations, there won't be any temp_i, temp_j
             pass
-        results = results[['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'outlier_count', 'pvalue', \
-                           'fdr_chrom', 'fdr_dist', 'case_avg', 'control_avg'] + list(footprints.keys())]
+        columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'outlier_count', 'pvalue', \
+                   'fdr_chrom', 'fdr_dist', 'case_avg', 'control_avg'] + list(footprints.keys()) + \
+                  ['circle']
+        results = results[columns] 
+        results.to_csv(os.path.join(outdir, ".".join(["nofilter", chrom, "bedpe"])), sep = "\t", index = False)
+        results = results[(results['outlier_count'] > results['circle'] * circle_threshold_mult) & \
+                          (results['outlier_count'] > results['donut'] * donut_threshold_mult) & \
+                          (results['outlier_count'] > results['lower_left'] * lower_left_threshold_mult) & \
+                          (results['outlier_count'] > results['horizontal'] * horizontal_threshold_mult) & \
+                          (results['outlier_count'] > results['vertical'] * vertical_threshold_mult)]
+        if filter_file:
+            filter_regions = pd.read_csv(filter_file, sep = "\t", header = None)
+            filter_regions.rename({0:'chr', 1:'start'}, axis = 1, inplace = True)
+            for side in ['x1', 'y1']:
+                results = results.merge(filter_regions, left_on = ['chr1', side], \
+                                     right_on = ['chr', 'start'], how = "outer", indicator = True)
+                results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
+            results = results[columns]
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
         
 def combine_postprocessed_chroms(directory):
     headers = "\t".join(["chr1","x1","x2","chr2","y1","y2","outlier_count",\
                          "pvalue","fdr_chrom","fdr_dist","case_avg","control_avg",\
-                         "local","lower_left","donut","horizontal","vertical",\
+                         "local","circle","lower_left","donut","horizontal","vertical",\
                          "cluster","cluster_type","cluster_size","neg_log10_fdr","summit"])
     output_filename_temp = os.path.join(directory, "combined.postprocessed.bedpe.temp")
     output_filename = os.path.join(directory, "combined.postprocessed.bedpe")
@@ -194,7 +213,7 @@ def label_propagate(dist_matrix_binary):
                         peak_to_label[peak] = label_candidate
     return label_to_peaks
 
-def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize):
+def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
     for chrom in proc_chroms:
         input_filename = os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"]))
         d = pd.read_csv(input_filename, sep = "\t")
@@ -234,10 +253,10 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize):
                 df['cluster_size'] = df.shape[0]
                 df.loc[:,'neg_log10_fdr'] = np.sum(-np.log10(df.loc[:,'fdr_chrom']))
                 df['summit'] = 0
-                df.loc[df['fdr_chrom'].idxmin(),'summit'] = 1
+                #df.loc[df['fdr_chrom'].idxmin(),'summit'] = 1
                 return df
             clusters = clusters.groupby('cluster').apply(compute_cluster_stats)
-
+            
             #find broad and sharp peaks
             clusters = clusters.sort_values('neg_log10_fdr', axis = 0).reset_index(drop = True)
             temp = pd.DataFrame({'row': list(range(1, clusters.shape[0] + 1)), 'nlfdr': clusters['neg_log10_fdr']})
@@ -251,19 +270,49 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize):
             ref_value = clusters.iloc[ref_point,:]['neg_log10_fdr']
             clusters.loc[clusters['neg_log10_fdr'] < ref_value, 'cluster_type'] = 'SharpPeak'
             clusters.loc[clusters['neg_log10_fdr'] >= ref_value, 'cluster_type'] = 'BroadPeak'
-
-            final = pd.concat([singletons, clusters], axis = 0, sort = False)
-            final.drop(["i", "j"], axis = 1, inplace = True)
-            final.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), sep = "\t", index = False)
+            
+            def find_cluster_summits(df, summit_gap):
+                summits = pd.DataFrame({i:[] for i in list(df.columns)})
+                #print(summits.shape)
+                #print(df)
+                while (df.shape[0] > 0):
+                    summit = pd.DataFrame([df.loc[df['fdr_chrom'].idxmin(),:]], columns = list(df.columns))
+                    #print(summit)
+                    #print(summit.shape)
+                    #print(type(summit))
+                    #print(df.shape)
+                    summits = pd.concat([summits, summit], axis = 0)
+                    #print('summit shape:')
+                    #print(summit.shape)
+                    #print('summits shape:')
+                    #print(summits.shape)
+                    df = df[(abs(df['x1'] - summit.iloc[0,:]['x1']) > summit_gap) & \
+                            (abs(df['y1'] - summit.iloc[0,:]['y1']) > summit_gap)]
+                return summits
+                
+            summits = clusters.groupby('cluster').apply(find_cluster_summits, summit_gap = summit_gap)
+            summits.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), \
+                           sep = "\t", index = False)
+            singletons.to_csv(os.path.join(outdir, ".".join(["singletons", "candidates", chrom, "bedpe"])), \
+                              sep = "\t", index = False)
+            
+            #final = pd.concat([singletons, clusters], axis = 0, sort = False)
+            #final.drop(["i", "j"], axis = 1, inplace = True)
+            #final.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), sep = "\t", index = False)
 
 def postprocess(indir, outdir, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
-                    candidate_upper_thresh, binsize, dist, clustering_gap, rank, n_proc, max_mem, num_cells):
+                    candidate_upper_thresh, binsize, dist, clustering_gap, rank, n_proc, max_mem, \
+                    num_cells, case_to_control_diff_threshold, circle_threshold_mult, donut_threshold_mult, \
+                    lower_left_threshold_mult, horizontal_threshold_mult, vertical_threshold_mult, \
+                    outlier_threshold_mult, filter_file, summit_gap):
     try:
         os.makedirs(outdir)
     except:
         pass
     proc_chroms = get_proc_chroms(chrom_lens, rank, n_proc)
     find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
-                    candidate_upper_thresh, binsize, dist, max_mem, num_cells)
-    cluster_peaks(outdir, proc_chroms, clustering_gap, binsize)
+                    candidate_upper_thresh, binsize, dist, max_mem, num_cells, case_to_control_diff_threshold, \
+                    circle_threshold_mult, donut_threshold_mult, lower_left_threshold_mult, \
+                    horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file)
+    cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap)
    
