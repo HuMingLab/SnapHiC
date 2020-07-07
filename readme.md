@@ -22,14 +22,23 @@ usage: snap.py [-h] -i INDIR -s SUFFIX -o OUTDIR -c CHR_COLUMNS CHR_COLUMNS -p
                POS_COLUMNS POS_COLUMNS -l CHR_LENS [-g GENOME] [--chrom CHROM]
                [--dist DIST] [--binsize BINSIZE] [--low-cutoff LOW_CUTOFF]
                [--alpha ALPHA] [--parallel] [--threaded] [-n NUM_PROC]
-               [--outlier OUTLIER] [--local-lower-limit LOCAL_LOWER_LIMIT]
+               [--outlier OUTLIER] [--case-control-diff CASE_CONTROL_DIFF]
+               [--local-lower-limit LOCAL_LOWER_LIMIT]
                [--local-upper-limit LOCAL_UPPER_LIMIT]
                [--fdr-threshold FDR_THRESHOLD]
                [--postproc-gap-large POSTPROC_GAP_LARGE]
                [--postproc-gap-small POSTPROC_GAP_SMALL]
                [--candidate-lower-distance CANDIDATE_LOWER_DISTANCE]
                [--candidate-upper-distance CANDIDATE_UPPER_DISTANCE]
+               [--circle-threshold-multiplier CIRCLE_THRESHOLD_MULTIPLIER]
+               [--donut-threshold-multiplier DONUT_THRESHOLD_MULTIPLIER]
+               [--lower-left-threshold-multiplier LOWER_LEFT_THRESHOLD_MULTIPLIER]
+               [--horizontal-threshold-multiplier HORIZONTAL_THRESHOLD_MULTIPLIER]
+               [--vertical-threshold-multiplier VERTICAL_THRESHOLD_MULTIPLIER]
+               [--outlier-threshold-multiplier OUTLIER_THRESHOLD_MULTIPLIER]
+               [--summit-gap SUMMIT_GAP] [--filter-file FILTER_FILE]
                [--clustering-gap CLUSTERING_GAP] [--max-memory MAX_MEMORY]
+               [--steps [STEPS [STEPS ...]]]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -59,6 +68,9 @@ optional arguments:
   -n NUM_PROC, --num-proc NUM_PROC
                         number of processes used in threaded mode
   --outlier OUTLIER     percentage threshold for finding outliers.
+  --case-control-diff CASE_CONTROL_DIFF
+                        difference threshold for case mean to control mean for
+                        finding candidates
   --local-lower-limit LOCAL_LOWER_LIMIT
                         number of bins around center (in each direction) to
                         exlude from neighborhood
@@ -79,6 +91,29 @@ optional arguments:
   --candidate-upper-distance CANDIDATE_UPPER_DISTANCE
                         upper threshold for distance between candidate peak
                         binpairs
+  --circle-threshold-multiplier CIRCLE_THRESHOLD_MULTIPLIER
+                        multiplier for circle filter threshold used in finding
+                        candidates
+  --donut-threshold-multiplier DONUT_THRESHOLD_MULTIPLIER
+                        multiplier for donut filter threshold used in finding
+                        candidates
+  --lower-left-threshold-multiplier LOWER_LEFT_THRESHOLD_MULTIPLIER
+                        multiplier for lowerleft filter threshold used in
+                        finding candidates
+  --horizontal-threshold-multiplier HORIZONTAL_THRESHOLD_MULTIPLIER
+                        multiplier for horizontal filter threshold used in
+                        finding candidates
+  --vertical-threshold-multiplier VERTICAL_THRESHOLD_MULTIPLIER
+                        multiplier for vertical filter threshold used in
+                        finding candidates
+  --outlier-threshold-multiplier OUTLIER_THRESHOLD_MULTIPLIER
+                        multiplier for number of outlier cells for threshold
+                        used in finding candidates
+  --summit-gap SUMMIT_GAP
+                        disallowed distance between summit points of a cluster
+  --filter-file FILTER_FILE
+                        bed file of regions to be filtered. Regions should be
+                        binned
   --clustering-gap CLUSTERING_GAP
                         number of allowed gaps between peaks in same cluster
   --max-memory MAX_MEMORY
