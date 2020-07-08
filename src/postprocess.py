@@ -175,13 +175,12 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
         
 def combine_postprocessed_chroms(directory):
-    headers = "\t".join(["chr1","x1","x2","chr2","y1","y2","outlier_count",\
-                         "pvalue","fdr_chrom","fdr_dist","case_avg","control_avg",\
-                         "local","circle","lower_left","donut","horizontal","vertical",\
-                         "cluster","cluster_type","cluster_size","neg_log10_fdr","summit"])
     output_filename_temp = os.path.join(directory, "combined.postprocessed.bedpe.temp")
     output_filename = os.path.join(directory, "combined.postprocessed.bedpe")
     input_filepattern = directory + '/clustered.candidates.*.bedpe'
+    headerfile = glob.glob(input_filepattern)[0]
+    with open(headerfile, 'r') as ifile:
+        headers = ifile.readline().split()
     proc = subprocess.Popen("awk 'FNR>1' " + input_filepattern + ' > ' + output_filename_temp, shell = True)
     proc.communicate()
     with open(output_filename, 'w') as ofile:
@@ -276,11 +275,14 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
                 clusters.loc[clusters['neg_log10_fdr'] >= ref_value, 'cluster_type'] = 'BroadPeak'
             
                 def find_cluster_summits(df, summit_gap):
+                    df_copy = df.copy()
                     summits = pd.DataFrame({i:[] for i in list(df.columns)})
                     #print(summits.shape)
                     #print(df)
                     while (df.shape[0] > 0):
-                        summit = pd.DataFrame([df.loc[df['fdr_chrom'].idxmin(),:]], columns = list(df.columns))
+                        min_index = df['fdr_chrom'].idxmin()
+                        summit = pd.DataFrame([df.loc[min_index,:]], columns = list(df.columns))
+                        df_copy.loc[min_index, 'summit'] = 1
                         #print(summit)
                         #print(summit.shape)
                         #print(type(summit))
@@ -292,10 +294,13 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
                         #print(summits.shape)
                         df = df[(abs(df['x1'] - summit.iloc[0,:]['x1']) > summit_gap) & \
                                 (abs(df['y1'] - summit.iloc[0,:]['y1']) > summit_gap)]
-                    return summits
+                    summits.loc[:,'summit'] = 1
+                    return df_copy #summits
                 
-                summits = clusters.groupby('cluster').apply(find_cluster_summits, summit_gap = summit_gap)
-                summits.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), \
+                clusters = clusters.groupby('cluster').apply(find_cluster_summits, summit_gap = summit_gap)
+                #summits = clusers[clusters['summit'] == 1]
+                #summits.to_csv(os.path.join(outdir, ".".join(["summits", chrom, "bedpe"])), sep = "\t", index = False)
+                clusters.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), \
                                sep = "\t", index = False)
             singletons.to_csv(os.path.join(outdir, ".".join(["singletons", "candidates", chrom, "bedpe"])), \
                               sep = "\t", index = False)

@@ -21,7 +21,7 @@ def main():
     print(parallel_mode)    
     
     #step 1; binning
-    bin_dir = os.path.join(args.outdir, "binned")
+    bin_dir = os.path.join(args.outdir, "binned2", "missing_" + args.chrom)
     if 'bin' in args.steps:
         if parallel_mode == 'nonparallel':
             bin_sets(args.indir, args.suffix, binsize = args.binsize, outdir = bin_dir, \
@@ -106,9 +106,9 @@ def main():
         #print("loops called")    
     
     #step 5; find candidates and cluster peaks
-    num_cells = pd.read_csv(glob.glob(os.path.join(hic_dir, "*.normalized.combined.bedpe"))[0], sep = "\t").shape[1] - 7
     postproc_dir = os.path.join(args.outdir, "postprocessed")
     if 'postprocess' in args.steps:
+        num_cells = pd.read_csv(glob.glob(os.path.join(hic_dir, "*.normalized.combined.bedpe"))[0], sep = "\t").shape[1] - 7
         if parallel_mode == 'nonparallel':
             postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
                         fdr_thresh = args.fdr_threshold, gap_large = args.postproc_gap_large, \
