@@ -215,8 +215,10 @@ def label_propagate(dist_matrix_binary):
 
 def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
     for chrom in proc_chroms:
+        print('processing ', chrom)
         input_filename = os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"]))
         d = pd.read_csv(input_filename, sep = "\t")
+        print(d.shape, 'chrom')
         if d.shape[0] > 0:
             #compute pairwise distances
             d.loc[:,'i'] = (d.loc[:,'x1'] // binsize).astype(int)
@@ -232,12 +234,6 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
             singletons.reset_index(drop = True, inplace = True)
             clusters = d.drop(singleton_indices, axis = 0).reset_index(drop = True)
 
-            #find labels for cluster peaks
-            points = clusters[['i', 'j']].to_numpy()
-            dists = distance.cdist(points, points, 'cityblock')
-            dists = dists <= clustering_gap
-            label_to_peaks = label_propagate(dists)
-
             #form cluster_name column
             singletons.loc[:,'cluster'] = list(singletons.index)
             singletons.loc[:,'cluster'] = 'singleton_' + singletons['cluster'].astype(str)
@@ -247,6 +243,12 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
             singletons['summit'] = 1
 
             if clusters.shape[0] > 0:
+                #find labels for cluster peaks
+                points = clusters[['i', 'j']].to_numpy()
+                dists = distance.cdist(points, points, 'cityblock')
+                dists = dists <= clustering_gap
+                label_to_peaks = label_propagate(dists)
+
                 clusters.loc[:,'cluster'] = 0
 
                 for counter, (label, indices) in enumerate(label_to_peaks.items()):
