@@ -245,54 +245,56 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
             singletons['cluster_size'] = 1
             singletons['neg_log10_fdr'] = -np.log10(singletons['fdr_chrom'])
             singletons['summit'] = 1
-            clusters.loc[:,'cluster'] = 0
 
-            for counter, (label, indices) in enumerate(label_to_peaks.items()):
-                clusters.loc[list(indices), 'cluster'] = "cluster_" + str(counter)
-            def compute_cluster_stats(df):
-                df['cluster_size'] = df.shape[0]
-                df['neg_log10_fdr'] = np.sum(-np.log10(df['fdr_chrom']))
-                df['summit'] = 0
-                #df.loc[df['fdr_chrom'].idxmin(),'summit'] = 1
-                return df
-            clusters = clusters.groupby('cluster').apply(compute_cluster_stats)
+            if clusters.shape[0] > 0:
+                clusters.loc[:,'cluster'] = 0
+
+                for counter, (label, indices) in enumerate(label_to_peaks.items()):
+                    clusters.loc[list(indices), 'cluster'] = "cluster_" + str(counter)
+                def compute_cluster_stats(df):
+                    df['cluster_size'] = df.shape[0]
+                    df['neg_log10_fdr'] = np.sum(-np.log10(df['fdr_chrom']))
+                    df['summit'] = 0
+                    #df.loc[df['fdr_chrom'].idxmin(),'summit'] = 1
+                    return df
+                clusters = clusters.groupby('cluster').apply(compute_cluster_stats)
             
-            #find broad and sharp peaks
-            clusters = clusters.sort_values('neg_log10_fdr', axis = 0).reset_index(drop = True)
-            temp = pd.DataFrame({'row': list(range(1, clusters.shape[0] + 1)), 'nlfdr': clusters['neg_log10_fdr']})
-            temp.loc[:,'row'] = temp.loc[:,'row'] / max(temp['row'])
-            temp.loc[:,'nlfdr'] = temp.loc[:,'nlfdr'] / max(temp['nlfdr'])
-            rows = temp['row'].copy()
-            temp.loc[:,'row'] = 1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
-            temp.loc[:,'nlfdr'] = -1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
-            temp['new_row'] = list(range(temp.shape[0]))
-            ref_point = temp[temp['nlfdr'] == min(temp['nlfdr'])]['new_row'].iloc[0]
-            ref_value = clusters.iloc[ref_point,:]['neg_log10_fdr']
-            clusters.loc[clusters['neg_log10_fdr'] < ref_value, 'cluster_type'] = 'SharpPeak'
-            clusters.loc[clusters['neg_log10_fdr'] >= ref_value, 'cluster_type'] = 'BroadPeak'
+                #find broad and sharp peaks
+                clusters = clusters.sort_values('neg_log10_fdr', axis = 0).reset_index(drop = True)
+                temp = pd.DataFrame({'row': list(range(1, clusters.shape[0] + 1)), 'nlfdr': clusters['neg_log10_fdr']})
+                temp.loc[:,'row'] = temp.loc[:,'row'] / max(temp['row'])
+                temp.loc[:,'nlfdr'] = temp.loc[:,'nlfdr'] / max(temp['nlfdr'])
+                rows = temp['row'].copy()
+                temp.loc[:,'row'] = 1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
+                temp.loc[:,'nlfdr'] = -1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
+                temp['new_row'] = list(range(temp.shape[0]))
+                ref_point = temp[temp['nlfdr'] == min(temp['nlfdr'])]['new_row'].iloc[0]
+                ref_value = clusters.iloc[ref_point,:]['neg_log10_fdr']
+                clusters.loc[clusters['neg_log10_fdr'] < ref_value, 'cluster_type'] = 'SharpPeak'
+                clusters.loc[clusters['neg_log10_fdr'] >= ref_value, 'cluster_type'] = 'BroadPeak'
             
-            def find_cluster_summits(df, summit_gap):
-                summits = pd.DataFrame({i:[] for i in list(df.columns)})
-                #print(summits.shape)
-                #print(df)
-                while (df.shape[0] > 0):
-                    summit = pd.DataFrame([df.loc[df['fdr_chrom'].idxmin(),:]], columns = list(df.columns))
-                    #print(summit)
-                    #print(summit.shape)
-                    #print(type(summit))
-                    #print(df.shape)
-                    summits = pd.concat([summits, summit], axis = 0)
-                    #print('summit shape:')
-                    #print(summit.shape)
-                    #print('summits shape:')
+                def find_cluster_summits(df, summit_gap):
+                    summits = pd.DataFrame({i:[] for i in list(df.columns)})
                     #print(summits.shape)
-                    df = df[(abs(df['x1'] - summit.iloc[0,:]['x1']) > summit_gap) & \
-                            (abs(df['y1'] - summit.iloc[0,:]['y1']) > summit_gap)]
-                return summits
+                    #print(df)
+                    while (df.shape[0] > 0):
+                        summit = pd.DataFrame([df.loc[df['fdr_chrom'].idxmin(),:]], columns = list(df.columns))
+                        #print(summit)
+                        #print(summit.shape)
+                        #print(type(summit))
+                        #print(df.shape)
+                        summits = pd.concat([summits, summit], axis = 0)
+                        #print('summit shape:')
+                        #print(summit.shape)
+                        #print('summits shape:')
+                        #print(summits.shape)
+                        df = df[(abs(df['x1'] - summit.iloc[0,:]['x1']) > summit_gap) & \
+                                (abs(df['y1'] - summit.iloc[0,:]['y1']) > summit_gap)]
+                    return summits
                 
-            summits = clusters.groupby('cluster').apply(find_cluster_summits, summit_gap = summit_gap)
-            summits.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), \
-                           sep = "\t", index = False)
+                summits = clusters.groupby('cluster').apply(find_cluster_summits, summit_gap = summit_gap)
+                summits.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), \
+                               sep = "\t", index = False)
             singletons.to_csv(os.path.join(outdir, ".".join(["singletons", "candidates", chrom, "bedpe"])), \
                               sep = "\t", index = False)
             
