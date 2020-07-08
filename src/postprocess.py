@@ -241,17 +241,17 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
             #form cluster_name column
             singletons.loc[:,'cluster'] = list(singletons.index)
             singletons.loc[:,'cluster'] = 'singleton_' + singletons['cluster'].astype(str)
-            singletons.loc[:,'cluster_type'] = 'singleton'
-            singletons.loc[:,'cluster_size'] = 1
-            singletons.loc[:,'neg_log10_fdr'] = -np.log10(singletons['fdr_chrom'])
-            singletons.loc[:,'summit'] = 1
+            singletons['cluster_type'] = 'singleton'
+            singletons['cluster_size'] = 1
+            singletons['neg_log10_fdr'] = -np.log10(singletons['fdr_chrom'])
+            singletons['summit'] = 1
             clusters.loc[:,'cluster'] = 0
 
             for counter, (label, indices) in enumerate(label_to_peaks.items()):
                 clusters.loc[list(indices), 'cluster'] = "cluster_" + str(counter)
             def compute_cluster_stats(df):
                 df['cluster_size'] = df.shape[0]
-                df.loc[:,'neg_log10_fdr'] = np.sum(-np.log10(df.loc[:,'fdr_chrom']))
+                df['neg_log10_fdr'] = np.sum(-np.log10(df['fdr_chrom']))
                 df['summit'] = 0
                 #df.loc[df['fdr_chrom'].idxmin(),'summit'] = 1
                 return df
@@ -265,7 +265,7 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
             rows = temp['row'].copy()
             temp.loc[:,'row'] = 1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
             temp.loc[:,'nlfdr'] = -1/np.sqrt(2) * rows + 1/np.sqrt(2) * temp['nlfdr']
-            temp.loc[:,'new_row'] = list(range(temp.shape[0]))
+            temp['new_row'] = list(range(temp.shape[0]))
             ref_point = temp[temp['nlfdr'] == min(temp['nlfdr'])]['new_row'].iloc[0]
             ref_value = clusters.iloc[ref_point,:]['neg_log10_fdr']
             clusters.loc[clusters['neg_log10_fdr'] < ref_value, 'cluster_type'] = 'SharpPeak'
