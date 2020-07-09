@@ -21,7 +21,7 @@ def main():
     print(parallel_mode)    
     
     #step 1; binning
-    bin_dir = os.path.join(args.outdir, "binned2", "missing_" + args.chrom)
+    bin_dir = os.path.join(args.outdir, "binned")
     if 'bin' in args.steps:
         if parallel_mode == 'nonparallel':
             bin_sets(args.indir, args.suffix, binsize = args.binsize, outdir = bin_dir, \

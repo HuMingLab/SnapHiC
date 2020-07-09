@@ -184,7 +184,7 @@ def combine_postprocessed_chroms(directory):
     proc = subprocess.Popen("awk 'FNR>1' " + input_filepattern + ' > ' + output_filename_temp, shell = True)
     proc.communicate()
     with open(output_filename, 'w') as ofile:
-        ofile.write(headers + "\n")
+        ofile.write("\t".join(headers) + "\n")
     proc = subprocess.Popen(" ".join(["cat",output_filename_temp,">>",output_filename]), shell = True)
     proc.communicate()
     d = pd.read_csv(output_filename, sep = "\t")
