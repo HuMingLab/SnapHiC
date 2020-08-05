@@ -24,7 +24,7 @@ genomeID="mm10"
 chrom="None" #None or no argument for all chromosomes
 dist=1000000
 bin=10000
-local_neighborhood_lower=3
+local_neighborhood_lower=2
 local_neighborhood_upper=5
 outlier_percent=0.97500211 # ~=1.96
 case_control_diff=0.4

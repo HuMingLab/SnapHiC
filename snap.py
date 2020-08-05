@@ -51,6 +51,7 @@ def main():
             get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
                             normalize = True, n_proc = n_proc, rank = rank, genome = args.genome)
+            print(rank, 'waiting for other processes')
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
             params = [(bin_dir, rwr_dir, args.binsize, args.alpha, args.dist, chrom_dict, \

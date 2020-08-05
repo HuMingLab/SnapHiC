@@ -20,7 +20,8 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
     output_file.close()
     
     #count the number of outliers
-    outlier_norm_count = scipy.stats.norm.ppf(outlier_threshold)
+    #outlier_norm_count = scipy.stats.norm.ppf(outlier_threshold)
+    outlier_norm_count = outlier_threshold
     d = pd.read_csv(output_filename, sep = "\t", header = None)
     mat = d.to_numpy()
     outliers = np.sum(mat > outlier_norm_count, axis = 1)

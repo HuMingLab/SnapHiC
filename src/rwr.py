@@ -26,23 +26,36 @@ edge_filename = "/Users/abnousa/data/single_cell/snap_hic/data/inputs/miao_mESC_
 #@profile
 def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], alpha = ALPHA, final_try = False):
     gc.collect()
+    #print('starting rwr')
     edgelist = pd.read_csv(edge_filename, sep = "\t", header = None, names = ["chr1", "x1", "x2", "chr2", "y1", "y2"])
     edgelist = edgelist[(edgelist['chr1'] == chrom) & (edgelist['chr1'] == edgelist['chr2'])]
     edgelist = bin_matrix(edgelist, binsize)
     NUM = int(np.ceil(chrom_len / binsize))
+    #print('NUM', NUM)
     
-    edges = pd.DataFrame({'x1':list(range(1, NUM)), 'y1':list(range(2, NUM+1))})
+    edges = pd.DataFrame({'x1':list(range(0, NUM-1)), 'y1':list(range(1, NUM))})
     edges = pd.concat([edges, edgelist[['x1', 'y1']]], axis = 0)
     edges.loc[:,'weight'] = 1
-    
+    #print('deleting edgelist')
+    del edgelist
+    #print('getting stoc matrix')
     g = get_stochastic_matrix_from_edgelist(edges)
+    #print('matrix returned')
+    gc.collect()
+    #print('solving rwr')
     r = solve_rwr(g, alpha, final_try)
-    del g
+    #print('r returned')
+    #print(type(r))
+    del g, edges
+    gc.collect()
     if isinstance(r, str) and r == "try_later":
+        #print('returning try later')
         return r
-
+    #print('reformatting')
     df = reformat_sparse_matrix(r, binsize, distance)
+    #print('reformatted')
     del r
+    gc.collect()
     df.loc[:,'chr1'] = chrom
     df.loc[:,'chr2'] = chrom
     df = df[['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'value']]
@@ -56,49 +69,70 @@ def bin_matrix(df, binsize):
 
 
 def get_stochastic_matrix_from_edgelist(edgelist):
-    gc.collect()
     g = nx.from_pandas_edgelist(edgelist, source = 'x1', target = 'y1', edge_attr = ['weight'], create_using = nx.Graph())
     degrees = np.array([g.degree(i) for i in g.nodes()])
     m = sp.sparse.csc_matrix(nx.adjacency_matrix(g).astype(float))
     m.data /= degrees[m.indices] #stochastic matrix
+    del g, degrees
     return m
 
 
 def solve_rwr(stoch_matrix, alpha = ALPHA, final_try = False):
     gc.collect()
+    #print('first')
     m = stoch_matrix*(1-alpha)
+    #print('second')
     m = m.transpose()
+    #print('thhird')
     y = sp.sparse.spdiags([1] * m.shape[0], 0, m.shape[0], m.shape[0], format = "csc")
+    #print('fifth')
     A = y - m
+    #print('trying')
     try:
+        s = None
         s = sp.sparse.linalg.spsolve(A, y)
+        #print('s first try')
     except:
-        print("sparse solver failed. trying dense solver.")
+        #print('attempting to delete')
+        if s is not None:
+            del s
+        #print("sparse solver failed. trying dense solver.")
         sys.stdout.flush()
         gc.collect()
         try:
+            A, y, s = [None] * 3
+            #print('second try')
             A = A.todense()
+            #print('have a')
             y = y.todense()
+            #print('have y')
             s = sp.linalg.solve(A, y)
+            #print('working on s')
             s = sp.sparse.csr_matrix(s)
+            #print('s on second try;')
         except:
-            print('dense solver failed too. will retry later?')
+            #print('attempting to delete in second')
+            del A, y, s
+            #print('dense solver failed too. will retry later?')
             sys.stdout.flush()
             if final_try:
-                print('raising exception')
+                #print('was final try')
+                gc.collect()
+                #print('raising exception')
                 sys.stdout.flush()
                 raise Exception("Cannot allocate enough memory of solving RWR")
             else:
+                #print('returning string')
                 gc.collect()
                 return "try_later"
+    #print('finalizing s')
     s *= alpha
     s += s.transpose()
-    gc.collect()
+    del m, y, A
     return s.tocoo()
 
 
 def reformat_sparse_matrix(m, binsize, distance):
-    gc.collect()
     max_bin_distance = distance // binsize
     df = pd.DataFrame({'x1':m.row, 'y1':m.col, 'value':m.data})
     df = df[((df['y1'] - df['x1']) <= max_bin_distance) & ((df['y1'] - df['x1']) > 0)]
@@ -110,16 +144,20 @@ def reformat_sparse_matrix(m, binsize, distance):
     return df
 
 def normalize_along_diagonal(d, trim = 0.01):
-    trim_value = d['value'].quantile(1-trim)
+    #trim_value = d['value'].quantile(1-trim)
+    vals = d['value'].tolist()
+    vals.sort()
+    vals.reverse()
+    trim_value = vals[round(trim * len(vals)) - 1]
     #print(trim_value)
-    remaining = d[d['value'] < trim_value]['value']
+    remaining = d[d['value'] <= trim_value]['value']
     mu = np.mean(remaining)
     sd = np.std(remaining)
     #print(trim_value, remaining.shape[0], mu, sd)
     d.loc[:,'value'] = (d['value'] - mu) / sd
     return d
 
-def determine_proc_share(indir, chrom_lens, n_proc, rank):
+def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, rewrite = True):
     filenames = os.listdir(indir)
     filenames = [name for name in filenames if name.endswith(".bedpe")]
     filenames.sort()
@@ -128,13 +166,26 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank):
     chrom_names = list(chrom_lens.keys())
     chrom_names.sort()
     jobs = [(chrom_names[i], filenames[j], setnames[j]) for i in range(len(chrom_names)) for j in range(len(filenames))]
-    
+    print('init jobs len', len(jobs))
+    if rewrite:
+        completed_filenames = os.listdir(outdir)
+        #print(completed_filenames[0])
+        completed_filenames = [name for name in completed_filenames if name.endswith(".normalized.rwr.bedpe")]
+        #print(completed_filenames[0])
+        completed_filenames.sort()
+        completed_setnames = [re.search(r".*?\..*?\.", fname).group()[:-1] for fname in completed_filenames]
+        #print(completed_setnames[0])
+        completed_pairs = [setname.split('.') for setname in completed_setnames]
+        #print(completed_pairs[:2])
+        #print(jobs[:2])
+        jobs = [job for job in jobs if [job[2], job[0]] not in completed_pairs]
+        print('new jobs len', len(jobs))
     indices = list(range(rank, len(jobs), n_proc))
     proc_jobs = [jobs[i] for i in indices]
     proc_jobs = deque(proc_jobs)
     proc_jobs.rotate(rank)
     proc_jobs = list(proc_jobs)
-    #random.shuffle(proc_jobs)
+    random.shuffle(proc_jobs)
     return proc_jobs
     
 
@@ -147,16 +198,16 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
     except:
         pass
 
-    processor_jobs = determine_proc_share(indir, chrom_lens, n_proc, rank)
+    processor_jobs = determine_proc_share(indir, chrom_lens, n_proc, rank, outdir)
     retry_filename = os.path.join(outdir, ('_'.join([str(rank), "retry", "instances"]) + ".txt"))
     attempt_counter = 0
     attempts_allowed = 10
-    print(rank, [(name[0], name[2]) for name in processor_jobs])
+    #print(rank, [(name[0], name[2]) for name in processor_jobs])
     sys.stdout.flush()
     while len(processor_jobs) > 0:
         for chrom, filename, setname in processor_jobs:
             gc.collect()
-            print('running', rank, chrom, setname)
+            #print('running', rank, chrom, setname)
             sys.stdout.flush()
             filepath = os.path.join(indir, filename)
             final_try = False if attempt_counter < attempts_allowed else True
@@ -177,8 +228,9 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
                 df = df.groupby(df['y1'] - df['x1'], as_index = False).apply(normalize_along_diagonal).reset_index(drop = True)
                 df.sort_values(['x1', 'y1'], inplace = True)
                 df.to_csv(output_filename, sep = "\t", header = None, index = False)
+            del df
         try:
-            print("rank", rank, ": attempting to rerun failed jobs. Attempt #", attempt_counter + 1)
+            #print("rank", rank, ": attempting to rerun failed jobs. Attempt #", attempt_counter + 1)
             sys.stdout.flush()
             with open(retry_filename, 'r') as infile:
                 jobs = infile.readlines()
@@ -188,7 +240,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
             attempt_counter += 1
         except:
             processor_jobs = []
-            print("rank", rank, ": no remaining jobs or parser failed")
+            #print("rank", rank, ": no remaining jobs or parser failed")
             sys.stdout.flush()
 
 if __name__ == "__main__":

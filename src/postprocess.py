@@ -115,7 +115,67 @@ def apply_all_filters(mat, footprints, candidates, start_index, max_distance_bin
         empty_dict = {i:[] for i in list(sub_candidates.columns) + list(footprints.keys())}
     return pd.DataFrame(empty_dict)
 
+def apply_mean_filters(candidate, df, gap_large, gap_small, binsize):
+    candidate['circle'] = 0
+    candidate['donut'] = 0
+    candidate['lower_left'] = 0
+    candidate['horizontal'] = 0
+    candidate['vertical'] = 0
+    neighbors = df[(abs(df['x1'] - candidate['x1']) <= gap_large * binsize) & (abs(df['y1'] - candidate['y1']) <= gap_large * binsize) &\
+                  (~((abs(df['x1'] - candidate['x1']) <= gap_small * binsize) & (abs(df['y1'] - candidate['y1']) <= gap_small * binsize)))].copy()
+    if neighbors.shape[0] > 0:
+        candidate['circle'] = neighbors['outlier_count'].mean()
+        neighbors['type'] = 'donut'
+        neighbors.loc[neighbors['x1'] == candidate['x1'], 'type'] = 'horizontal'
+        neighbors.loc[neighbors['y1'] == candidate['y1'], 'type'] = 'vertical'
+        neighbors.loc[(neighbors['x1'] <= candidate['x1'] - 1) & (neighbors['y1'] <= candidate['y1'] - 1), 'type'] = 'lower_left'
+        candidate['donut'] = neighbors.loc[neighbors['type'] == 'donut', 'outlier_count'].mean()
+        candidate['vertical'] = neighbors.loc[neighbors['type'] == 'vertical', 'outlier_count'].mean()
+        candidate['horizontal'] = neighbors.loc[neighbors['type'] == 'horizontal', 'outlier_count'].mean()
+        #if candidate['x1'] == 3100000:
+        #    neighbors.to_csv('checkthisneighbs.tsv', sep = "\t", index = False)
+        #    print('thhese are neigh')
+        #    print(neighbors)
+        #if neighbors[neighbors['type']=='lower_left'].shape[0] > 0:
+        candidate['lower_left'] = neighbors.loc[neighbors['type'] == 'lower_left', 'outlier_count'].mean()
+    return candidate
+
 def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
+                    candidate_upper_thresh, binsize, dist, max_mem, num_cells, case_to_control_diff_threshold, \
+                    circle_threshold_mult, donut_threshold_mult, lower_left_threshold_mult, \
+                    horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file):
+    for chrom in proc_chroms:
+        infile = os.path.join(indir, ".".join(["significances", chrom, "bedpe"]))
+        d = pd.read_csv(infile, sep = "\t")
+        candidates = d[(d['y1'] - d['x1'] <= candidate_upper_thresh) & \
+                     (d['y1'] - d['x1'] >= candidate_lower_thresh) & \
+                     (d['case_avg'] > 0) & \
+                     (d['case_avg'] - d['control_avg'] > case_to_control_diff_threshold) & \
+                     (d['fdr_dist'] < fdr_thresh) &\
+                     (d['outlier_count'] > outlier_threshold_mult*num_cells)]
+        results = candidates.apply(apply_mean_filters, axis = 1, df = d, gap_large = gap_large, gap_small = gap_small, binsize = binsize)
+        columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'outlier_count', 'pvalue', \
+                   'fdr_chrom', 'fdr_dist', 'case_avg', 'control_avg', 'circle', 'donut', \
+                   'horizontal', 'vertical', 'lower_left']
+        results = results[columns]
+        results.to_csv(os.path.join(outdir, ".".join(["nofilter", chrom, "bedpe"])), sep = "\t", index = False)
+        results = results[(results['outlier_count'] > results['circle'] * circle_threshold_mult) & \
+                          (results['outlier_count'] > results['donut'] * donut_threshold_mult) & \
+                          (results['outlier_count'] > results['lower_left'] * lower_left_threshold_mult) & \
+                          (results['outlier_count'] > results['horizontal'] * horizontal_threshold_mult) & \
+                          (results['outlier_count'] > results['vertical'] * vertical_threshold_mult)]
+
+        if filter_file:
+            filter_regions = pd.read_csv(filter_file, sep = "\t", header = None)
+            filter_regions.rename({0:'chr', 1:'start'}, axis = 1, inplace = True)
+            for side in ['x1', 'y1']:
+               results = results.merge(filter_regions, left_on = ['chr1', side], \
+                                       right_on = ['chr', 'start'], how = "outer", indicator = True)
+               results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
+            results = results[columns]
+        results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
+        
+def find_candidates_integer(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
                     candidate_upper_thresh, binsize, dist, max_mem, num_cells, case_to_control_diff_threshold, \
                     circle_threshold_mult, donut_threshold_mult, lower_left_threshold_mult, \
                     horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file):
@@ -173,7 +233,7 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
                 results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
             results = results[columns]
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
-        
+ 
 def combine_postprocessed_chroms(directory):
     output_filename_temp = os.path.join(directory, "combined.postprocessed.bedpe.temp")
     output_filename = os.path.join(directory, "combined.postprocessed.bedpe")
@@ -223,12 +283,12 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
             d.loc[:,'i'] = (d.loc[:,'x1'] // binsize).astype(int)
             d.loc[:,'j'] = (d.loc[:,'y1'] // binsize).astype(int)
             points = d[['i', 'j']].to_numpy()
-            dists = distance.cdist(points, points, 'cityblock')
+            dists = distance.cdist(points, points, 'sqeuclidean')
             np.fill_diagonal(dists, np.Inf)
             min_dists = dists.min(axis = 0)
 
             #separate singletons from cluster peaks
-            singleton_indices = np.where(min_dists > clustering_gap)[0]  
+            singleton_indices = np.where(min_dists > 2 * (clustering_gap**2))[0]  
             singletons = d.iloc[singleton_indices, :]
             singletons.reset_index(drop = True, inplace = True)
             clusters = d.drop(singleton_indices, axis = 0).reset_index(drop = True)
@@ -238,14 +298,14 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
             singletons.loc[:,'cluster'] = 'singleton_' + singletons['cluster'].astype(str)
             singletons['cluster_type'] = 'singleton'
             singletons['cluster_size'] = 1
-            singletons['neg_log10_fdr'] = -np.log10(singletons['fdr_chrom'])
+            singletons['neg_log10_fdr'] = -np.log10(singletons['fdr_dist'])
             singletons['summit'] = 1
 
             if clusters.shape[0] > 0:
                 #find labels for cluster peaks
                 points = clusters[['i', 'j']].to_numpy()
-                dists = distance.cdist(points, points, 'cityblock')
-                dists = dists <= clustering_gap
+                dists = distance.cdist(points, points, 'sqeuclidean')
+                dists = dists <= 2*(clustering_gap**2)
                 label_to_peaks = label_propagate(dists)
 
                 clusters.loc[:,'cluster'] = 0
@@ -254,7 +314,7 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
                     clusters.loc[list(indices), 'cluster'] = "cluster_" + str(counter)
                 def compute_cluster_stats(df):
                     df['cluster_size'] = df.shape[0]
-                    df['neg_log10_fdr'] = np.sum(-np.log10(df['fdr_chrom']))
+                    df['neg_log10_fdr'] = np.sum(-np.log10(df['fdr_dist']))
                     df['summit'] = 0
                     #df.loc[df['fdr_chrom'].idxmin(),'summit'] = 1
                     return df
@@ -280,8 +340,9 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
                     #print(summits.shape)
                     #print(df)
                     while (df.shape[0] > 0):
-                        min_index = df['fdr_chrom'].idxmin()
+                        min_index = df['fdr_dist'].idxmin()
                         summit = pd.DataFrame([df.loc[min_index,:]], columns = list(df.columns))
+                        summit['combined_neglog10_fdr'] = df_copy['neg_log10_fdr'].sum()
                         df_copy.loc[min_index, 'summit'] = 1
                         #print(summit)
                         #print(summit.shape)
@@ -292,7 +353,7 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
                         #print(summit.shape)
                         #print('summits shape:')
                         #print(summits.shape)
-                        df = df[(abs(df['x1'] - summit.iloc[0,:]['x1']) > summit_gap) & \
+                        df = df[(abs(df['x1'] - summit.iloc[0,:]['x1']) > summit_gap) | \
                                 (abs(df['y1'] - summit.iloc[0,:]['y1']) > summit_gap)]
                     summits.loc[:,'summit'] = 1
                     return df_copy #summits
