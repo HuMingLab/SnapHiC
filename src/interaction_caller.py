@@ -50,6 +50,11 @@ def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_l
         matrix_lower_bound = min(i + mat_size + upper_limit, chrom_bins + 1)
         portion = d[(d['i'] >= matrix_upper_bound) & \
                     (d['j'] < matrix_lower_bound)]
+        if portion.shape[0] == 0:
+            continue
+        full_sparse = pd.DataFrame({'i': range(min(portion['i']), max(portion['j'])-1), \
+                    'j': range(min(portion['i'])+1, max(portion['j']))})
+        portion = portion.merge(full_sparse, on = ['i','j'], how = "outer")
         #print(portion.iloc[:,list(range(7)) + [11, 12]])
         #print("start", matrix_upper_bound, "end", matrix_lower_bound)
         dense_cells = []
@@ -60,14 +65,15 @@ def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_l
                                            shape = (matrix_lower_bound - matrix_upper_bound, \
                                                     matrix_lower_bound - matrix_upper_bound))
             cell_mat = np.array(cell_mat.todense())
+            cell_mat[np.tril_indices(cell_mat.shape[0],0)] = np.nan
             dense_cells.append(cell_mat)
         mat_3d = np.stack(dense_cells, axis = -1)
         if matrix_upper_bound == 0:
             pad_size = abs(i - upper_limit)
-            mat_3d = np.pad(mat_3d, ((pad_size, 0), (pad_size, 0), (0, 0)), mode = 'constant')
+            mat_3d = np.pad(mat_3d, ((pad_size, 0), (pad_size, 0), (0, 0)), mode = 'constant', constant_values = np.nan)
         if matrix_lower_bound == chrom_bins + 1:
             pad_size = upper_limit #- 1
-            mat_3d = np.pad(mat_3d, ((0, pad_size), (0, pad_size), (0, 0)), mode = 'constant')
+            mat_3d = np.pad(mat_3d, ((0, pad_size), (0, pad_size), (0, 0)), mode = 'constant', constant_values = np.nan)
         yield mat_3d, i
 
 def get_nth_diag_indices(mat, offset):
@@ -101,7 +107,7 @@ def get_neighbor_counts_matrix(shape, gap_large, gap_small, max_distance):
     a += area
     return a
 
-def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index, max_distance_bin, neighbor_counts_matrix):
+def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index, max_distance_bin):
     gc.collect()
     #sliding window
     print('in function')
@@ -117,36 +123,41 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     small_neighborhood = np.swapaxes(small_neighborhood, -2, -1)
     big_neighborhood = np.swapaxes(big_neighborhood, -2, -1)
     
-    print('summing')
+    big_neighborhood_counts = np.sum(~np.isnan(big_neighborhood), axis = -1)
+    small_neighborhood_counts = np.sum(~np.isnan(small_neighborhood), axis = -1)
+
+    #print('summing')
     #sum on the last axis (sum of neighbors)
     big_neighborhood = big_neighborhood.sum(axis = -1)
     small_neighborhood = small_neighborhood.sum(axis = -1)
     
-    print('trimming')
+    #print('trimming')
     #remove edge cases that are used only as neighbors
     trim_size = upper_limit - lower_limit
     small_neighborhood = small_neighborhood[trim_size:-trim_size, trim_size:-trim_size]
+    small_neighborhood_counts = small_neighborhood_counts[trim_size:-trim_size, trim_size:-trim_size]
     mat = mat[upper_limit:-upper_limit, upper_limit:-upper_limit]
     
-    print('subtraacting')
+    #print('subtraacting')
     #local_neighborhood
     local_neighborhood = big_neighborhood - small_neighborhood
+    local_neighborhood_counts = big_neighborhood_counts - small_neighborhood_counts
     #local_neighbors_count = (((upper_limit*2+1) ** 2 - (lower_limit*2+1) ** 2) - (upper_limit*2+1) + (lower_limit*2+1))/2
-    del small_neighborhood, big_neighborhood
+    del small_neighborhood, big_neighborhood, big_neighborhood_counts, small_neighborhood_counts
     gc.collect()
     
     #for each cell compute the average value over the neighborhood
     #print('local_neighborhood shape:', local_neighborhood.shape)
     #print('neighbors_count_mat shape: ' , neighbor_counts_matrix.shape)
-    neighbor_counts = np.repeat(neighbor_counts_matrix[:local_neighborhood.shape[0], :local_neighborhood.shape[0], np.newaxis], \
-                                local_neighborhood.shape[2], axis=2)
-    print('new shape', neighbor_counts.shape)
+    #neighbor_counts = np.repeat(neighbor_counts_matrix[:local_neighborhood.shape[0], :local_neighborhood.shape[0], np.newaxis], \
+    #                            local_neighborhood.shape[2], axis=2)
+    #print('new shape', neighbor_counts.shape)
     #print(len(np.where(neighbor_counts == 0)[0]))
-    local_neighborhood /= neighbor_counts
-    del neighbor_counts
+    local_neighborhood /= local_neighborhood_counts
+    del local_neighborhood_counts
     gc.collect()
     
-    print('pval computation')
+    #print('pval computation')
     #compute averages over all cells for each point and each local neighborhood
     #print(local_neighborhood.shape, mat.shape)
     pvals = stats.ttest_rel(mat, local_neighborhood, axis = 2).pvalue
@@ -154,16 +165,16 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     local_neighborhood = np.mean(local_neighborhood, axis = -1)
     mat = np.mean(mat, axis = -1)
     
-    print('upper triangle')
+    #print('upper triangle')
     #keep only upper triangle
     mat = np.triu(mat, 1)
     local_neighborhood = np.triu(local_neighborhood, 1)
     pvals = np.triu(pvals, 1)
     pvals = np.nan_to_num(pvals, nan = 1)
-    print(mat.shape, local_neighborhood.shape, pvals.shape)
+    #print(mat.shape, local_neighborhood.shape, pvals.shape)
     #print(np.sum(np.isnan(pvals)))
     
-    print('creating df')
+    #print('creating df')
     #convert matrix to dataframe
     mat = sp.sparse.coo_matrix(mat)
     local_neighborhood = sp.sparse.coo_matrix(local_neighborhood)
@@ -182,7 +193,7 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     result.loc[:,'j'] = result['j'].astype(int)
     result = result[result['j'] - result['i'] <= max_distance_bin]
     #print(max(result['i']), max(result['j']))
-    print('function finished')
+    #print('function finished')
     #mat = mat.sum(axis = -1)
     return result
     
@@ -207,10 +218,10 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
         max_distance_bin = dist // binsize
         results = []
         #print(matrix_max_size, neighborhood_limit_upper, neighborhood_limit_lower)
-        neighbor_counts_matrix = get_neighbor_counts_matrix((matrix_max_size + neighborhood_limit_upper * 2, \
-                                                             matrix_max_size + neighborhood_limit_upper * 2), \
-                                                         neighborhood_limit_upper, \
-                                                         neighborhood_limit_lower, max_distance_bin)
+        #neighbor_counts_matrix = get_neighbor_counts_matrix((matrix_max_size + neighborhood_limit_upper * 2, \
+        #                                                     matrix_max_size + neighborhood_limit_upper * 2), \
+        #                                                 neighborhood_limit_upper, \
+        #                                                 neighborhood_limit_lower, max_distance_bin)
         #print('num zeros_2d', len(np.where(neighbor_counts_matrix==0)[0]))
         print('going in for')
         for i, (submatrix, start_index) in enumerate(submatrices):
@@ -224,7 +235,7 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
             #print(start_index)
             submat_result = compute_significances(submatrix, neighborhood_limit_upper, \
                                                   neighborhood_limit_lower, num_cells, start_index, \
-                                                  max_distance_bin, neighbor_counts_matrix)
+                                                  max_distance_bin)
             #print('returned')
             results.append(submat_result)
         print(rank, 'offtheloop')
