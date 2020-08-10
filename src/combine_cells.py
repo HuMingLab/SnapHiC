@@ -29,6 +29,7 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
     #add the bins as the first columns of bedpe file, and append outliers as last column
     binpairs = pd.read_csv(input_filenames[0], sep = "\t", header = None).iloc[:,:-1]
     d = pd.concat([binpairs, d], axis = 1)
+    #print(chrom, len(outliers), d.shape)
     d.loc[:, 'outliers'] = outliers
     
     #write output to file

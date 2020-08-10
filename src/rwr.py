@@ -166,7 +166,7 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, rewrite = True
     chrom_names = list(chrom_lens.keys())
     chrom_names.sort()
     jobs = [(chrom_names[i], filenames[j], setnames[j]) for i in range(len(chrom_names)) for j in range(len(filenames))]
-    print('init jobs len', len(jobs))
+    #print('init jobs len', len(jobs))
     if rewrite:
         completed_filenames = os.listdir(outdir)
         #print(completed_filenames[0])
@@ -179,7 +179,7 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, rewrite = True
         #print(completed_pairs[:2])
         #print(jobs[:2])
         jobs = [job for job in jobs if [job[2], job[0]] not in completed_pairs]
-        print('new jobs len', len(jobs))
+        #print('new jobs len', len(jobs))
     indices = list(range(rank, len(jobs), n_proc))
     proc_jobs = [jobs[i] for i in indices]
     proc_jobs = deque(proc_jobs)
@@ -189,7 +189,8 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, rewrite = True
     return proc_jobs
     
 
-def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, normalize = False, n_proc = 1, rank = 0, genome = 'mouse'):
+def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, 
+				normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None):
     if not outdir:
         outdir = indir
         outdir = os.path.join(outdir, "rwr")
@@ -211,7 +212,9 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
             sys.stdout.flush()
             filepath = os.path.join(indir, filename)
             final_try = False if attempt_counter < attempts_allowed else True
-            df = get_rwr(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], alpha = alpha)
+            df = get_rwr(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], 
+				alpha = alpha)
+            #last_bin = chrom_lens[chrom] // binsize
             if isinstance(df, str) and df == "try_later":
                 print ("attempting to add to the remainder")
                 sys.stdout.flush()
@@ -224,6 +227,19 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
             df.sort_values(['x1', 'y1'], inplace = True)
             df.to_csv(output_filename, sep = "\t", header = None, index = False)
             if normalize:
+                if filter_file:
+                    filter_region=pd.read_csv(filter_file, sep = "\t", header = None)
+                    filter_region = filter_region[filter_region[0] == df.iloc[0]['chr1']]
+                    filter_region['filter'] = True
+                    filter_region = filter_region[[1,'filter']]
+                    df_remove_left = df.merge(filter_region, left_on = ['x1'], right_on = [1])
+                    df_remove_right = df.merge(filter_region, left_on = ['y1'], right_on = [1])
+                    df_remove = pd.concat([df_remove_left, df_remove_right], axis = 0).drop_duplicates()
+                    df_remove = df_remove[['x1','y1','filter']]
+                    df = df.merge(df_remove, left_on = ['x1', 'y1'], right_on = ['x1', 'y1'], how = "outer", indicator = True)
+                    df = df[df['_merge'] == 'left_only']
+                    df = df.drop(['filter', '_merge'], axis = 1)
+                #df = df[(df['x1'] >= 50000) & (df['y1'] <= last_bin * binsize - 50000 - 1)]
                 output_filename = os.path.join(outdir, ".".join([setname, chrom, "normalized", "rwr", "bedpe"]))
                 df = df.groupby(df['y1'] - df['x1'], as_index = False).apply(normalize_along_diagonal).reset_index(drop = True)
                 df.sort_values(['x1', 'y1'], inplace = True)

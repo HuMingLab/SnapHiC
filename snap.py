@@ -8,6 +8,7 @@ from src.postprocess import postprocess, combine_postprocessed_chroms
 import glob
 import pandas as pd
 import multiprocessing
+#import mpi4py
 
 def main():
     parser = create_parser()
@@ -45,17 +46,19 @@ def main():
         if parallel_mode == 'nonparallel':
             get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
-                            normalize = True, n_proc = n_proc, rank = rank, genome = args.genome)
+                            normalize = True, n_proc = n_proc, rank = rank, genome = args.genome, \
+                            filter_file = args.filter_file)
         elif parallel_mode == 'parallel':
             properties['comm'].Barrier()
             get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
-                            normalize = True, n_proc = n_proc, rank = rank, genome = args.genome)
+                            normalize = True, n_proc = n_proc, rank = rank, genome = args.genome, \
+                            filter_file = args.filter_file)
             print(rank, 'waiting for other processes')
             properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
             params = [(bin_dir, rwr_dir, args.binsize, args.alpha, args.dist, chrom_dict, \
-                      True, n_proc, i, args.genome) for i in range(n_proc)]
+                      True, n_proc, i, args.genome, args.filter_file) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
                 pool.starmap(get_rwr_for_all, params)
         #print("rwr computed")
@@ -231,8 +234,8 @@ def create_parser():
                         help = 'if set, will attempt to use multiprocessing on single machine', required = False)
     parser.add_argument('-n', '--num-proc', help = 'number of processes used in threaded mode',
                         required = False, default = 0, type = int)
-    parser.add_argument('--outlier', required = False, default = 0.97500211, type = float, \
-                        help = 'percentage threshold for finding outliers.')
+    parser.add_argument('--outlier', required = False, default = 1.96, type = float, \
+                        help = 'zscore threshold for finding outliers.')
     parser.add_argument('--case-control-diff', default = 0.4, type = float, required = False,
                         help = 'difference threshold for case mean to control mean for finding candidates')
     parser.add_argument('--local-lower-limit', default = 3, type = int, required = False, \
