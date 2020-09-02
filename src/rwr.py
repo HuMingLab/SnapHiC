@@ -129,7 +129,7 @@ def solve_rwr(stoch_matrix, alpha = ALPHA, final_try = False, setname = None, ch
     #    #sys.stdout.flush()
     #    gc.collect()
     try:
-        s, A, y = None, None, None
+        s = None
         #print('second try', setname, chrom)
         #sys.stdout.flush()
         A = A.todense()
