@@ -9,6 +9,7 @@ import sys
 import random
 from collections import deque
 import gc
+import scikits.umfpack
 
 
 CHROM_DICT = {"chr19" : 61431566}
@@ -24,9 +25,12 @@ edge_filename = "/Users/abnousa/data/single_cell/snap_hic/data/inputs/miao_mESC_
 # In[3]:
 
 #@profile
-def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], alpha = ALPHA, final_try = False):
+def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], \
+                                                alpha = ALPHA, final_try = False, logfile = None, parallel = False, threaded_lock = None):
     gc.collect()
-    #print('starting rwr')
+    setname = edge_filename[(edge_filename.rfind('/') + 1):]
+    #print('computing rwr for', setname, chrom)
+    #sys.stdout.flush()
     edgelist = pd.read_csv(edge_filename, sep = "\t", header = None, names = ["chr1", "x1", "x2", "chr2", "y1", "y2"])
     edgelist = edgelist[(edgelist['chr1'] == chrom) & (edgelist['chr1'] == edgelist['chr2'])]
     edgelist = bin_matrix(edgelist, binsize)
@@ -36,24 +40,42 @@ def get_rwr(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DI
     edges = pd.DataFrame({'x1':list(range(0, NUM-1)), 'y1':list(range(1, NUM))})
     edges = pd.concat([edges, edgelist[['x1', 'y1']]], axis = 0)
     edges.loc[:,'weight'] = 1
-    #print('deleting edgelist')
+    #print('deleting edgelist', setname, chrom)
+    #sys.stdout.flush()
     del edgelist
-    #print('getting stoc matrix')
+    #print('getting stoc matrix', setname, chrom)
+    #sys.stdout.flush()
     g = get_stochastic_matrix_from_edgelist(edges)
-    #print('matrix returned')
+    #print('matrix returned', setname, chrom)
+    #sys.stdout.flush()
     gc.collect()
-    #print('solving rwr')
-    r = solve_rwr(g, alpha, final_try)
-    #print('r returned')
-    #print(type(r))
+    #print('solving rwr', setname, chrom)
+    #sys.stdout.flush()
+    msg = f'solved equation for {chrom} {setname}\n'
+    r = solve_rwr(g, alpha, final_try, setname, chrom)
+    if logfile and parallel:
+        logfile.Write_shared(msg.encode('utf-8'))
+        logfile.Sync()
+    elif logfile:
+        if threaded_lock:
+            threaded_lock.acquire()
+        logfile.write(msg)
+        logfile.flush()
+        if threaded_lock:
+            threaded_lock.release()
+    #print('r returned', setname, chrom)
+    #print(type(r), setname, chrom)
+    #sys.stdout.flush()
     del g, edges
     gc.collect()
     if isinstance(r, str) and r == "try_later":
-        #print('returning try later')
+        #print('returning try later', setname, chrom)
         return r
-    #print('reformatting')
+    #print('reformatting', setname, chrom)
+    #sys.stdout.flush()
     df = reformat_sparse_matrix(r, binsize, distance)
-    #print('reformatted')
+    #print('reformatted', setname, chrom)
+    #sys.stdout.flush()
     del r
     gc.collect()
     df.loc[:,'chr1'] = chrom
@@ -77,55 +99,72 @@ def get_stochastic_matrix_from_edgelist(edgelist):
     return m
 
 
-def solve_rwr(stoch_matrix, alpha = ALPHA, final_try = False):
+def solve_rwr(stoch_matrix, alpha = ALPHA, final_try = False, setname = None, chrom = None):
     gc.collect()
-    #print('first')
+    #print('first', setname, chrom)
     m = stoch_matrix*(1-alpha)
-    #print('second')
+    #print('second', setname, chrom)
+    #sys.stdout.flush()
     m = m.transpose()
-    #print('thhird')
+    #print('thhird', setname, chrom)
     y = sp.sparse.spdiags([1] * m.shape[0], 0, m.shape[0], m.shape[0], format = "csc")
-    #print('fifth')
+    #print('fifth', setname, chrom)
     A = y - m
-    #print('trying')
+    #print('trying', setname, chrom)
+    #sys.stdout.flush()
+    #try:
+    #    s = None
+    #    #s = sp.sparse.linalg.spsolve(A, y)
+    #    s = scikits.umfpack.spsolve(A, y)
+    #    if isinstance(s, np.ndarray):
+    #        s = sp.sparse.csr_matrix(s)
+    #    #print('s first try', setname, chrom)
+    #    #sys.stdout.flush()
+    #except:
+    #    #print('attempting to delete', setname, chrom)
+    #    #sys.stdout.flush()
+    #    if s is not None:
+    #        del s
+    #    #print("sparse solver failed. trying dense solver.")
+    #    #sys.stdout.flush()
+    #    gc.collect()
     try:
-        s = None
-        s = sp.sparse.linalg.spsolve(A, y)
-        #print('s first try')
+        s, A, y = None, None, None
+        #print('second try', setname, chrom)
+        #sys.stdout.flush()
+        A = A.todense()
+        #print('have a', setname, chrom)
+        y = y.todense()
+        #print('have y', setname, chrom)
+        s = sp.linalg.solve(A, y)
+        #print('working on s', setname, chrom)
+        s = sp.sparse.csr_matrix(s)
+        #print('s on second try;', setname, chrom)
+        #sys.stdout.flush()
     except:
-        #print('attempting to delete')
+        #print('attempting to delete in second', setname, chrom)
+        #sys.stdout.flush()
+        if A is not None:
+            del A
+        if y is not None:
+            del y
         if s is not None:
             del s
-        #print("sparse solver failed. trying dense solver.")
-        sys.stdout.flush()
-        gc.collect()
-        try:
-            A, y, s = [None] * 3
-            #print('second try')
-            A = A.todense()
-            #print('have a')
-            y = y.todense()
-            #print('have y')
-            s = sp.linalg.solve(A, y)
-            #print('working on s')
-            s = sp.sparse.csr_matrix(s)
-            #print('s on second try;')
-        except:
-            #print('attempting to delete in second')
-            del A, y, s
-            #print('dense solver failed too. will retry later?')
-            sys.stdout.flush()
-            if final_try:
-                #print('was final try')
-                gc.collect()
-                #print('raising exception')
-                sys.stdout.flush()
-                raise Exception("Cannot allocate enough memory of solving RWR")
-            else:
-                #print('returning string')
-                gc.collect()
-                return "try_later"
-    #print('finalizing s')
+        #print('dense solver failed too. will retry later?', setname, chrom)
+        #sys.stdout.flush()
+        if final_try:
+            #print('was final try', setname, chrom)
+            gc.collect()
+            #print('raising exception', setname, chrom)
+            #sys.stdout.flush()
+            raise Exception("Cannot allocate enough memory of solving RWR")
+        else:
+            #print('returning string', setname, chrom)
+            #gc.collect()
+            return "try_later"
+    ##############
+    #print('finalizing s', setname, chrom)
+    #sys.stdout.flush()
     s *= alpha
     s += s.transpose()
     del m, y, A
@@ -157,40 +196,94 @@ def normalize_along_diagonal(d, trim = 0.01):
     d.loc[:,'value'] = (d['value'] - mu) / sd
     return d
 
-def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, rewrite = True):
+def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, ignore_sets = set(), rewrite = True):
     filenames = os.listdir(indir)
     filenames = [name for name in filenames if name.endswith(".bedpe")]
     filenames.sort()
     #print(filenames)
     setnames = [re.search(r".*?\.", fname).group()[:-1] for fname in filenames]
-    chrom_names = list(chrom_lens.keys())
-    chrom_names.sort()
+    chrom_list = [(k, chrom_lens[k]) for k in list(chrom_lens.keys())]
+    chrom_list.sort(key = lambda x: x[1])
+    chrom_list.reverse()
+    chrom_names = [i[0] for i in chrom_list]
+    #chrom_names = list(chrom_lens.keys())
+    #chrom_names.sort()
     jobs = [(chrom_names[i], filenames[j], setnames[j]) for i in range(len(chrom_names)) for j in range(len(filenames))]
+    print('init jobs len', len(jobs), '.ignore sets len', len(ignore_sets))
+    jobs = [job for job in jobs if (job[2], job[0]) not in ignore_sets]
+    print('jobs len after removing ignores', len(jobs), jobs[0])
+    print('example ignore', list(ignore_sets)[0] if len(ignore_sets) > 0 else "0")
     #print('init jobs len', len(jobs))
     if rewrite:
         completed_filenames = os.listdir(outdir)
         #print(completed_filenames[0])
+        incompl = [name for name in completed_filenames if not name.endswith(".normalized.rwr.bedpe")]
+        if rank == 0:
+            pass
+            #print(incompl)
         completed_filenames = [name for name in completed_filenames if name.endswith(".normalized.rwr.bedpe")]
         #print(completed_filenames[0])
+        #print('filenames', len(completed_filenames))
         completed_filenames.sort()
         completed_setnames = [re.search(r".*?\..*?\.", fname).group()[:-1] for fname in completed_filenames]
+        #print('completed_senames', len(completed_setnames))
         #print(completed_setnames[0])
-        completed_pairs = [setname.split('.') for setname in completed_setnames]
+        completed_pairs = set([tuple(setname.split('.')) for setname in completed_setnames])
+        print('example completed', list(completed_pairs)[0] if len(completed_pairs) > 0 else "0")
+        #print('jobs vs complted', len(jobs), len(completed_pairs))
         #print(completed_pairs[:2])
         #print(jobs[:2])
-        jobs = [job for job in jobs if [job[2], job[0]] not in completed_pairs]
+        jobs = [job for job in jobs if (job[2], job[0]) not in completed_pairs]
         #print('new jobs len', len(jobs))
+    jobs.sort()
     indices = list(range(rank, len(jobs), n_proc))
+    #random.seed(4)
+    #random.shuffle(jobs)
+    #random.seed()
+    #if rank in [1,2,3, 19]:
+    #    print(rank, [(i[0], i[2]) for i in jobs[:5]])
     proc_jobs = [jobs[i] for i in indices]
-    proc_jobs = deque(proc_jobs)
-    proc_jobs.rotate(rank)
-    proc_jobs = list(proc_jobs)
+    #proc_jobs = deque(proc_jobs)
+    #proc_jobs.rotate(rank)
+    #proc_jobs = list(proc_jobs)
     random.shuffle(proc_jobs)
+    print('jobs for rank', rank, len(proc_jobs))
     return proc_jobs
     
+def ammend_ignore_list(logfile, ignore_filename):
+    ignore = []
+    if logfile:
+        with open(logfile, 'r') as lfile:
+            lines = lfile.readlines()
+        lines = [line.split() for line in lines]
+        started = set()
+        completed = set()
+        for line in lines:
+            if len(line) < 5:
+                continue
+            if line[0] == "solved":
+                #remove .bedpe suffix from setname
+                completed.add((line[-2], line[-1][:-6]))
+            else:
+                started.add((line[-2], line[-1]))
+        ignore = started.difference(completed)
+        with open(ignore_filename, 'a') as ofile:
+            for chrom, setname in ignore:
+            	ofile.write(f'{setname} {chrom}\n')
+        
+def get_ignore_list(filename):
+    with open(filename) as ifile:
+        lines = ifile.readlines()
+    lines = [line.split() for line in lines]
+    ignores = set()
+    for line in lines:
+        ignores.add((line[0], line[1]))
+    return ignores
+
 
 def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, 
-				normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None):
+				normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None, parallel = False, 
+                                rwr_logfile = None, rwr_logfilename = None, threaded_lock = None):
     if not outdir:
         outdir = indir
         outdir = os.path.join(outdir, "rwr")
@@ -198,8 +291,11 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         os.makedirs(outdir)
     except:
         pass
-
-    processor_jobs = determine_proc_share(indir, chrom_lens, n_proc, rank, outdir)
+    #print('rwr rank', rank)
+    #ignore_filename = os.path.join(outdir, 'ignore_sets.txt')
+    #ammend_ignore_list(rwr_logfilename, ignore_filename)
+    #ignore_sets = get_ignore_list(ignore_filename)
+    processor_jobs = determine_proc_share(indir, chrom_lens, n_proc, rank, outdir)#, ignore_sets = ignore_sets)
     retry_filename = os.path.join(outdir, ('_'.join([str(rank), "retry", "instances"]) + ".txt"))
     attempt_counter = 0
     attempts_allowed = 10
@@ -208,19 +304,31 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
     while len(processor_jobs) > 0:
         for chrom, filename, setname in processor_jobs:
             gc.collect()
-            #print('running', rank, chrom, setname)
-            sys.stdout.flush()
+            msg = f'rank {rank}: running {chrom} {setname}\n'
+            if rwr_logfile and parallel:
+                rwr_logfile.Write_shared(msg.encode('utf-8'))
+                rwr_logfile.Sync()
+            elif rwr_logfile:
+                if threaded_lock:
+                    threaded_lock.acquire()
+                rwr_logfile.write(msg)
+                rwr_logfile.flush()
+                if threaded_lock:
+                    threaded_lock.release()
+            #sys.stdout.flush()
             filepath = os.path.join(indir, filename)
             final_try = False if attempt_counter < attempts_allowed else True
+            #print('calling rwr for set')
+            #sys.stdout.flush()
             df = get_rwr(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], 
-				alpha = alpha)
-            #last_bin = chrom_lens[chrom] // binsize
+				alpha = alpha, logfile = rwr_logfile, parallel = parallel, threaded_lock = threaded_lock)
+            last_bin = chrom_lens[chrom] // binsize
             if isinstance(df, str) and df == "try_later":
-                print ("attempting to add to the remainder")
+                #print ("attempting to add to the remainder")
                 sys.stdout.flush()
                 with open(retry_filename, 'a') as ofile:
                     ofile.write("\t".join([chrom, filename, setname]) + "\n")
-                print('written to file',chrom, setname, "from", rank)
+                #print('written to file',chrom, setname, "from", rank)
                 sys.stdout.flush()
                 continue
             output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "bedpe"]))
@@ -239,7 +347,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
                     df = df.merge(df_remove, left_on = ['x1', 'y1'], right_on = ['x1', 'y1'], how = "outer", indicator = True)
                     df = df[df['_merge'] == 'left_only']
                     df = df.drop(['filter', '_merge'], axis = 1)
-                #df = df[(df['x1'] >= 50000) & (df['y1'] <= last_bin * binsize - 50000 - 1)]
+                df = df[(df['x1'] >= 50000) & (df['y1'] <= last_bin * binsize - 50000)]
                 output_filename = os.path.join(outdir, ".".join([setname, chrom, "normalized", "rwr", "bedpe"]))
                 df = df.groupby(df['y1'] - df['x1'], as_index = False).apply(normalize_along_diagonal).reset_index(drop = True)
                 df.sort_values(['x1', 'y1'], inplace = True)

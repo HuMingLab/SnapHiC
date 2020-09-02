@@ -13,13 +13,14 @@ import multiprocessing
 def main():
     parser = create_parser()
     args = parser.parse_args()
-    print(args.filter_file)
+    #print(args.filter_file)
     with open(args.filter_file) as ifile:
         lines = ifile.readlines()
-    print(lines[0])
-    parallel_mode, rank, n_proc, properties = determine_parallelization_options(args.parallel, args.threaded, args.num_proc)
+    #print(lines[0])
+    parallel_mode, rank, n_proc, parallel_properties = determine_parallelization_options(args.parallel, args.threaded, args.num_proc)
+    #print('aall is back', rank, n_proc)
     chrom_dict = parse_chrom_lengths(args.chrom, args.chr_lens, args.genome)
-    print(parallel_mode)    
+    #print(parallel_mode)    
     
     #step 1; binning
     bin_dir = os.path.join(args.outdir, "binned")
@@ -32,7 +33,7 @@ def main():
             bin_sets(args.indir, args.suffix, binsize = args.binsize, outdir = bin_dir, \
                      chr_columns = args.chr_columns, pos_columns = args.pos_columns, \
                      low_cutoff = args.low_cutoff, n_proc = n_proc, rank = rank)
-            properties['comm'].Barrier()
+            parallel_properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
             params = [(args.indir, args.suffix, args.binsize, bin_dir, args.chr_columns, args.pos_columns, \
                      args.low_cutoff, n_proc, i) for i in range(n_proc)]
@@ -43,24 +44,40 @@ def main():
     #step 2; RWR and normalization
     rwr_dir = os.path.join(args.outdir, "rwr")
     if 'rwr' in args.steps:
+        rwr_logfilename = os.path.join(rwr_dir, "log.rwr.txt")
+        try:
+            os.makedirs(os.path.join(rwr_dir, 'rwr'))
+        except:
+            pass
         if parallel_mode == 'nonparallel':
+            rwr_logfile = open(rwr_logfilename, 'a')
             get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
                             normalize = True, n_proc = n_proc, rank = rank, genome = args.genome, \
-                            filter_file = args.filter_file)
+                            filter_file = None, parallel = False, rwr_logfile = rwr_logfile, rwr_logfilename = rwr_logfilename, threaded_lock = None)
+            rwr_logfile.close()
         elif parallel_mode == 'parallel':
-            properties['comm'].Barrier()
+            parallel_properties['comm'].Barrier()
+            from mpi4py import MPI
+            amode = MPI.MODE_WRONLY|MPI.MODE_APPEND|MPI.MODE_CREATE
+            rwr_logfile = MPI.File.Open(parallel_properties['comm'], rwr_logfilename, amode)
+            rwr_logfile.Set_atomicity(True)
             get_rwr_for_all(indir = bin_dir, outdir = rwr_dir, binsize = args.binsize, \
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
                             normalize = True, n_proc = n_proc, rank = rank, genome = args.genome, \
-                            filter_file = args.filter_file)
-            print(rank, 'waiting for other processes')
-            properties['comm'].Barrier()
+                            filter_file = None, parallel = True, rwr_logfile = rwr_logfile, rwr_logfilename = rwr_logfilename, threaded_lock = None)
+            #print(rank, 'waiting for other processes')
+            rwr_logfile.Close()
+            parallel_properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
+            rwr_logfile = open(rwr_logfilename, 'a')
+            from multiprocessing import Lock
+            threaded_lock = Lock()
             params = [(bin_dir, rwr_dir, args.binsize, args.alpha, args.dist, chrom_dict, \
-                      True, n_proc, i, args.genome, args.filter_file) for i in range(n_proc)]
+                      True, n_proc, i, args.genome, None, False, rwr_logfile, rwr_logfilename, threaded_lock) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
                 pool.starmap(get_rwr_for_all, params)
+            rwr_logfile.close()
         #print("rwr computed")
     
     #step 3; combine cells
@@ -70,10 +87,12 @@ def main():
             combine_cells(indir = rwr_dir, outdir = hic_dir, outlier_threshold = args.outlier, \
                           chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
         elif parallel_mode == 'parallel':
-            properties['comm'].Barrier()
+            parallel_properties['comm'].Barrier()
+            print(rank, n_proc)
+            print('calling combine cells')
             combine_cells(indir = rwr_dir, outdir = hic_dir, outlier_threshold = args.outlier, \
                           chrom_lens = chrom_dict, rank = rank, n_proc = n_proc)
-            properties['comm'].Barrier()
+            parallel_properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
             params = [(rwr_dir, hic_dir, args.outlier, chrom_dict, i, n_proc) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
@@ -92,13 +111,13 @@ def main():
                              neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
                              n_proc = n_proc, max_mem = args.max_memory)
         elif parallel_mode == 'parallel':
-            properties['comm'].Barrier()
+            parallel_properties['comm'].Barrier()
             call_interactions(indir = hic_dir, outdir = interaction_dir, chrom_lens = chrom_dict, \
                              binsize = args.binsize, dist = args.dist, \
                              neighborhood_limit_lower = args.local_lower_limit, \
                              neighborhood_limit_upper = args.local_upper_limit, rank = rank, \
                              n_proc = n_proc, max_mem = args.max_memory)
-            properties['comm'].Barrier()
+            parallel_properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
             params = [(hic_dir, interaction_dir, chrom_dict, args.binsize, args.dist, \
                        args.local_lower_limit, args.local_upper_limit, i, n_proc, \
@@ -129,7 +148,7 @@ def main():
                         outlier_threshold_mult = args.outlier_threshold_multiplier, filter_file = args.filter_file, \
                         summit_gap = args.summit_gap)
         elif parallel_mode == 'parallel':
-            properties['comm'].Barrier()
+            parallel_properties['comm'].Barrier()
             postprocess(indir = interaction_dir, outdir = postproc_dir, chrom_lens = chrom_dict, \
                         fdr_thresh = args.fdr_threshold, gap_large = args.postproc_gap_large, \
                         gap_small = args.postproc_gap_small, candidate_lower_thresh = args.candidate_lower_distance, \
@@ -144,7 +163,7 @@ def main():
                         vertical_threshold_mult = args.vertical_threshold_multiplier, \
                         outlier_threshold_mult = args.outlier_threshold_multiplier, filter_file = args.filter_file, \
                         summit_gap = args.summit_gap)
-            properties['comm'].Barrier()
+            parallel_properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
             params = [(interaction_dir, postproc_dir, chrom_dict, args.fdr_threshold, args.postproc_gap_large, \
                         args.postproc_gap_small, args.candidate_lower_distance, \
@@ -181,10 +200,13 @@ def determine_parallelization_options(parallel, threaded, n_proc):
                 If using a single machine with multiple CPUs, use threaded"
     else:
         if parallel:
+            #print('it;s parallel')
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
             n_proc = comm.Get_size()
             rank = comm.Get_rank()
+            #print('n proc is', n_proc)
+            #print('rank is', rank)
             mode = 'parallel'
             properties = {'comm': comm}
         elif threaded:

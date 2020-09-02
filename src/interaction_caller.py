@@ -8,11 +8,16 @@ import subprocess
 from statsmodels.stats.multitest import multipletests
 import gc
 import sys
+import h5py
 
 
 def get_proc_chroms(chrom_lens, rank, n_proc):
-    chrom_names = list(chrom_lens.keys())
-    chrom_names.sort()
+    chrom_list = [(k, chrom_lens[k]) for k in list(chrom_lens.keys())]
+    chrom_list.sort(key = lambda x: x[1])
+    chrom_list.reverse()
+    chrom_names = [i[0] for i in chrom_list]
+    #chrom_names = list(chrom_lens.keys())
+    #chrom_names.sort()
     
     indices = list(range(rank, len(chrom_names), n_proc))
     proc_chroms = [chrom_names[i] for i in indices]
@@ -40,26 +45,56 @@ def determine_dense_matrix_size(num_cells, dist, binsize, max_mem):
         raise "Specified " + str(max_mem) + "GB is not enough for constructing dense matrix with distance " + str(dist) + "."
     return mat_size
 
-def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_limit, num_cells, chrom_size):
+def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_limit, num_cells, chrom_size, chrom_filename):
     d['i'] = (d.iloc[:,1] // binsize).astype(int)
     d['j'] = (d.iloc[:,4] // binsize).astype(int)
+    #all_rows = set(range(d.shape[0]))
     max_distance_bin = dist // binsize
     chrom_bins = int(chrom_size // binsize)
     for i in range(0, chrom_bins + 1, int(mat_size - max_distance_bin)):
         matrix_upper_bound = max(0, i - upper_limit)
         matrix_lower_bound = min(i + mat_size + upper_limit, chrom_bins + 1)
-        portion = d[(d['i'] >= matrix_upper_bound) & \
-                    (d['j'] < matrix_lower_bound)]
+        keeprows = list(np.where((d['i'] >= matrix_upper_bound) & (d['j'] < matrix_lower_bound))[0])
+        d_portion = d.iloc[keeprows, 0:6].reset_index(drop = True)
+        d_portion.columns = ['chr1','x1','x2','chr2','y1','y2']
+        print(d_portion, 'd_portions shape')
+        #skiprows = all_rows.difference(keeprows)
+        hdf_file = h5py.File(chrom_filename + '.cells.hdf', 'r')
+        portion = hdf_file[list(hdf_file.keys())[0]]
+        print(type(keeprows))
+        if isinstance(keeprows, list):
+            print(len(keeprows))
+            if len(keeprows) > 0:
+                print(type(keeprows[0]))
+        else:
+            print('notlist')
+        portion = portion[keeprows, :]
+        hdf_file.close()
         if portion.shape[0] == 0:
             continue
+        portion = pd.DataFrame(portion)
+        print('portions shape', portion.shape)
+        portion = pd.concat([d_portion, portion], axis = 1)
+        print('concatted portion', portion.shape)
+        print(np.where(portion.isnull().sum() > 0))
+        portion['i'] =  (portion.loc[:,'x1'] // binsize).astype(int)
+        portion['j'] =  (portion.loc[:,'y1'] // binsize).astype(int)
+        #portion_old = d[(d['i'] >= matrix_upper_bound) & \
+        #            (d['j'] < matrix_lower_bound)]
+        #if portion.shape[0] == 0:
+        #    continue
         full_sparse = pd.DataFrame({'i': range(min(portion['i']), max(portion['j'])-1), \
                     'j': range(min(portion['i'])+1, max(portion['j']))})
         portion = portion.merge(full_sparse, on = ['i','j'], how = "outer")
         #print(portion.iloc[:,list(range(7)) + [11, 12]])
         #print("start", matrix_upper_bound, "end", matrix_lower_bound)
         dense_cells = []
+        #print('here', portion.columns)
+        #print(portion.head())
+        #print(portion.dtypes[:20])
+        sys.stdout.flush()
         for cell_index in range(num_cells):
-            cell_mat = sp.sparse.csr_matrix((portion.iloc[:,cell_index + 6], \
+            cell_mat = sp.sparse.csr_matrix((portion.iloc[:, 6 + cell_index], \
                                             ((portion['i'] - matrix_upper_bound), \
                                              (portion['j'] - matrix_upper_bound))), \
                                            shape = (matrix_lower_bound - matrix_upper_bound, \
@@ -111,6 +146,7 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     gc.collect()
     #sliding window
     print('in function')
+    sys.stdout.flush()
     big_neighborhood = skimage.util.view_as_windows(mat, (2*upper_limit+1,2*upper_limit+1,num_cells), step = 1)
     small_neighborhood = skimage.util.view_as_windows(mat, (2*lower_limit+1,2*lower_limit+1,num_cells), step = 1)
     
@@ -120,28 +156,32 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
                                                big_neighborhood.shape[0], 1, -1, num_cells))
     small_neighborhood = np.squeeze(small_neighborhood.reshape(small_neighborhood.shape[0],\
                                                small_neighborhood.shape[0], 1, -1, num_cells))
+    print('squeezed')
     small_neighborhood = np.swapaxes(small_neighborhood, -2, -1)
     big_neighborhood = np.swapaxes(big_neighborhood, -2, -1)
-    
+    print('swapped')
     big_neighborhood_counts = np.sum(~np.isnan(big_neighborhood), axis = -1)
     small_neighborhood_counts = np.sum(~np.isnan(small_neighborhood), axis = -1)
 
-    #print('summing')
+    print('summing')
     #sum on the last axis (sum of neighbors)
     big_neighborhood = big_neighborhood.sum(axis = -1)
     small_neighborhood = small_neighborhood.sum(axis = -1)
     
-    #print('trimming')
+    print('trimming')
     #remove edge cases that are used only as neighbors
     trim_size = upper_limit - lower_limit
     small_neighborhood = small_neighborhood[trim_size:-trim_size, trim_size:-trim_size]
     small_neighborhood_counts = small_neighborhood_counts[trim_size:-trim_size, trim_size:-trim_size]
+    print('and mat')
     mat = mat[upper_limit:-upper_limit, upper_limit:-upper_limit]
     
-    #print('subtraacting')
+    print('subtraacting')
     #local_neighborhood
     local_neighborhood = big_neighborhood - small_neighborhood
+    print('local neigh counts')
     local_neighborhood_counts = big_neighborhood_counts - small_neighborhood_counts
+    print('clearning up')
     #local_neighbors_count = (((upper_limit*2+1) ** 2 - (lower_limit*2+1) ** 2) - (upper_limit*2+1) + (lower_limit*2+1))/2
     del small_neighborhood, big_neighborhood, big_neighborhood_counts, small_neighborhood_counts
     gc.collect()
@@ -153,19 +193,20 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     #                            local_neighborhood.shape[2], axis=2)
     #print('new shape', neighbor_counts.shape)
     #print(len(np.where(neighbor_counts == 0)[0]))
+    print('getting finals')
     local_neighborhood /= local_neighborhood_counts
     del local_neighborhood_counts
     gc.collect()
     
-    #print('pval computation')
+    print('pval computation')
     #compute averages over all cells for each point and each local neighborhood
     #print(local_neighborhood.shape, mat.shape)
     pvals = stats.ttest_rel(mat, local_neighborhood, axis = 2).pvalue
-    #print(pvals.shape)
+    print(pvals.shape)
     local_neighborhood = np.mean(local_neighborhood, axis = -1)
     mat = np.mean(mat, axis = -1)
     
-    #print('upper triangle')
+    print('upper triangle')
     #keep only upper triangle
     mat = np.triu(mat, 1)
     local_neighborhood = np.triu(local_neighborhood, 1)
@@ -174,7 +215,7 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     #print(mat.shape, local_neighborhood.shape, pvals.shape)
     #print(np.sum(np.isnan(pvals)))
     
-    #print('creating df')
+    print('creating df')
     #convert matrix to dataframe
     mat = sp.sparse.coo_matrix(mat)
     local_neighborhood = sp.sparse.coo_matrix(local_neighborhood)
@@ -193,7 +234,7 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     result.loc[:,'j'] = result['j'].astype(int)
     result = result[result['j'] - result['i'] <= max_distance_bin]
     #print(max(result['i']), max(result['j']))
-    #print('function finished')
+    print('function finished')
     #mat = mat.sum(axis = -1)
     return result
     
@@ -205,16 +246,26 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
         pass
     
     proc_chroms = get_proc_chroms(chrom_lens, rank, n_proc)
+    print(rank, proc_chroms)
+    sys.stdout.flush()
     for chrom in proc_chroms:
         print(rank, chrom)
         chrom_filename = os.path.join(indir, ".".join([chrom, "normalized", "combined", "bedpe"]))
+        #d = pd.read_csv(chrom_filename, sep = "\t", header = None, usecols = [0,1,2,3,4,5, num_cells + 6])
+        ##command = "awk -F '\t' '{print NF; exit}' " + chrom_filename
+        ##proc_output = subprocess.check_output(command, shell = True, executable = "/bin/bash")
+        ##num_cells = int(proc_output) - 7
+        with h5py.File(chrom_filename + ".cells.hdf", 'r') as ifile:
+            num_cells = ifile[chrom].shape[1]
+        print('num_cells', num_cells)
+        sys.stdout.flush()
         d = pd.read_csv(chrom_filename, sep = "\t", header = None)
-        num_cells = d.shape[1] - 7
+        #num_cells = d.shape[1] - 7
         matrix_max_size = determine_dense_matrix_size(num_cells, dist, binsize, max_mem)
         print(rank, matrix_max_size)
         submatrices = convert_sparse_dataframe_to_dense_matrix(d, matrix_max_size, \
                                                                dist, binsize, neighborhood_limit_upper, \
-                                                               num_cells, chrom_lens[chrom])
+                                                               num_cells, chrom_lens[chrom], chrom_filename)
         max_distance_bin = dist // binsize
         results = []
         #print(matrix_max_size, neighborhood_limit_upper, neighborhood_limit_lower)
@@ -224,9 +275,11 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
         #                                                 neighborhood_limit_lower, max_distance_bin)
         #print('num zeros_2d', len(np.where(neighbor_counts_matrix==0)[0]))
         print('going in for')
+        sys.stdout.flush()
         for i, (submatrix, start_index) in enumerate(submatrices):
             #print('iteration', i)
             print('start_index', start_index)
+            sys.stdout.flush()
             if i > 0:
                 limit =  i * (matrix_max_size - max_distance_bin) #- neighborhood_limit_upper
                 #results[-1] = results[-1][results[-1]['i'] < limit]
@@ -260,8 +313,9 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
         results.loc[:,'fdr_chrom'] = multipletests(list(results['pvalue']), method = 'fdr_bh')[1]
         results.loc[:,'i'] = (results['i'] * binsize).astype(int)
         results.loc[:,'j'] = (results['j'] * binsize).astype(int)
-        
-        d = d.iloc[:, list(range(6)) + [6 + num_cells]]
+       
+        print('finishing', d.shape) 
+        d = d.iloc[:, list(range(7))]
         d.columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'outlier_count']
         #print(d.head())
         #print(results.head())

@@ -78,7 +78,8 @@ def bin_sets(indir, file_suffix, binsize = 1e4, outdir = None, chr_columns = [2,
     proc_filenames = get_proc_filenames(filenames, n_proc, rank)
     try:
         os.makedirs(outdir)
-    except:
+    except Exception as e:
+        print(e)
         pass
 
     #setnames = []

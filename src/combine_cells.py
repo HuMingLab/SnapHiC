@@ -5,41 +5,123 @@ from scipy import stats
 import pandas as pd
 import glob
 import numpy as np
+import re
+import sys
+import h5py
 
 def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold):
     input_filepattern = indir + '/*' + chrom + '.normalized.rwr.bedpe'
     input_filenames = glob.glob(input_filepattern)
-    #print(input_filenames)
+    print(input_filenames[0])
+    print(os.path.basename(input_filenames[0]))
     
-    #copy all the rwr values from all cells for the chrom to one file
-    output_file = open(output_filename, 'w')
-    command = 'eval paste $(printf "<(cut -f7 %s) " ' + input_filepattern + ')'
-    #print(command)
-    subprocess.check_call(command, stdout = output_file, shell = True, executable = "/bin/bash")
-    #proc.communicate()
-    output_file.close()
+    tempfile1 = output_filename + '.tmp1'
+    #tempfile2 = output_filename + '.tmp2'
+    outlier_count_tempfile = output_filename + '.tmp2'
     
-    #count the number of outliers
-    #outlier_norm_count = scipy.stats.norm.ppf(outlier_threshold)
-    outlier_norm_count = outlier_threshold
-    d = pd.read_csv(output_filename, sep = "\t", header = None)
-    mat = d.to_numpy()
-    outliers = np.sum(mat > outlier_norm_count, axis = 1)
+    if False:
+        #copy all the rwr values from all cells for the chrom to one file
+        output_file = open(tempfile1, 'w')
+        output_err = open(tempfile1 + ".err", 'w')
+        #with open(output_filename, 'w')
+        #command = 'eval paste $(printf "<(cut -f7 %s) " ' + input_filepattern + ')'
+        #command = 'eval paste $(for i in ' + input_filepattern + '; do echo -n "<(cut -f7 $i) "; done)'
+        #print(command)
+        subprocess.check_call(command, stdout = output_file, stderr = output_err, shell = True, executable = "/bin/bash")
+        #proc.communicate()
+        output_file.close()
+        output_err.close()
+    
+        #count the number of outliers
+        #outlier_norm_count = scipy.stats.norm.ppf(outlier_threshold)
+        outlier_norm_count = outlier_threshold
+        d = pd.read_csv(tempfile1, sep = "\t", header = None, iterator = True, chunksize = 200000)
+        outliers = np.array([])
+        hdf_file = h5py.File(output_filename + ".cells.hdf", 'a')
+        cells_data = hdf_file.create_dataset(chrom, chunks = (200000, len(input_filenames)), shape = (0, len(input_filenames)), \
+                                                      maxshape = (None, len(input_filenames)))
+        for chunk in d:
+            mat = chunk.to_numpy()
+            outliers = np.concatenate([outliers, np.sum(mat > outlier_norm_count, axis = 1)])
+            cells_data.resize((cells_data.shape[0] + mat.shape[0]), axis = 0)
+            cells_data[-mat.shape[0]:] = mat
+        hdf_file.close()
+
+    if True:
+        print('opening hdfs', chrom)
+        sys.stdout.flush()
+        hdf_file = h5py.File(output_filename + ".cells.hdf", 'a')
+        cells_data = hdf_file.create_dataset(chrom, chunks = (200000, len(input_filenames)), shape = (0, len(input_filenames)), \
+                                                   maxshape = (None, len(input_filenames)))        
+
+        batch_size = 100
+        for i, batch_start in enumerate(range(0, len(input_filenames), batch_size)):
+            print("batch #", i, chrom)
+            sys.stdout.flush()
+            if os.path.exists(tempfile1):
+                os.remove(tempfile1)
+            output_file = open(tempfile1, 'w')
+            batch_end = min(batch_start + batch_size, len(input_filenames))
+            batch_files = input_filenames[batch_start:batch_end]
+            command = 'eval paste $(for i in ${fnames=' + ' '.join(batch_files) + '}; do echo -n "<(cut -f7 $i) "; done)'
+            subprocess.check_call(command, stdout = output_file, shell = True, executable = "/bin/bash")
+            output_file.close()
+            print("command completed", chrom)
+            sys.stdout.flush()
+            vals = pd.read_csv(tempfile1, sep = "\t", header = None).to_numpy()
+            
+            if i == 0:
+                cells_data.resize((vals.shape[0]), axis = 0)
+                outliers = np.sum(vals > outlier_threshold, axis = 1).astype(int)
+            else:
+                outliers += np.sum(vals > outlier_threshold, axis = 1).astype(int)
+            print("vals are ready", chrom)
+            sys.stdout.flush()
+            cells_data[:,batch_start:batch_end] = vals
+            print("vals transfered", chrom)
+            sys.stdout.flush()
+        hdf_file.close()
+        print("hdf temp closed", chrom)
+        sys.stdout.flush()
+         
+        if os.path.exists(tempfile1):
+            os.remove(tempfile1)
+    #outliers_df = pd.DataFrame({'outliers' : outliers})
+    #outliers_df.to_csv(outlier_count_tempfile, index = False, header = None, sep = "\t")
     
     #add the bins as the first columns of bedpe file, and append outliers as last column
-    binpairs = pd.read_csv(input_filenames[0], sep = "\t", header = None).iloc[:,:-1]
-    d = pd.concat([binpairs, d], axis = 1)
+    #binpairs = pd.read_csv(input_filenames[0], sep = "\t", header = None, usecols = [0,1,2,3,4,5]) #.iloc[:,:-1]
+    #command = 'cut -f1-6 ' + input_filenames[0] + ' | paste - ' + tempfile1 + ' ' + outlier_count_tempfile
+    #output_file = open(output_filename, 'w')
+    #subprocess.check_call(command, stdout = output_file, shell = True, executable = "/bin/bash")
+    #output_file.close()
+
+    #d = pd.concat([binpairs, d], axis = 1)
     #print(chrom, len(outliers), d.shape)
-    d.loc[:, 'outliers'] = outliers
+    #print(d.columns)
+    #d['outliers'] = outliers
     
     #write output to file
-    d.to_csv(output_filename, index = False, header = None, sep = "\t")
+    #d.to_csv(output_filename, index = False,  header = None, sep = "\t")
     
     #reformat
-    num_cells = d.shape[1] - 7
-    hic_format = d.iloc[:,:6]
-    hic_format.columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2']
-    hic_format.loc[:,'score'] = np.ceil(d.iloc[:, -1] / num_cells * 100).astype(int)
+    #get number of cells
+    #command = "awk -F '\t' '{print NF; exit}' " + output_filename
+    #proc_output = subprocess.check_output(command, shell = True, executable = "/bin/bash") 
+    #num_cells = int(proc_output) - 7
+    num_cells = len(input_filenames)
+    print("num cells:", num_cells)
+    #num_cells = d.shape[1] - 7
+
+    scores = np.ceil(outliers / num_cells * 100).astype(int)
+    
+    binpairs = pd.read_csv(input_filenames[0], sep = "\t", header = None, usecols = [0,1,2,3,4,5])
+    binpairs.columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2']
+    binpairs['outliers'] = outliers
+    binpairs.to_csv(output_filename, sep = "\t", index = False, header = None)
+    
+    hic_format = binpairs.drop('outliers', axis = 1)
+    hic_format.loc[:,'score'] = scores
     hic_format.loc[:,'str1'] = 0
     hic_format.loc[:,'str2'] = 1
     hic_format.loc[:,'frag1'] = 0
@@ -48,20 +130,29 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
     hic_format.to_csv(output_filename + ".hic.input", index = False, header = None, sep = "\t")
     
 def get_proc_chroms(chrom_lens, rank, n_proc):
-    chrom_names = list(chrom_lens.keys())
-    chrom_names.sort()
+    chrom_list = [(k, chrom_lens[k]) for k in list(chrom_lens.keys())]
+    chrom_list.sort(key = lambda x: x[1])
+    chrom_list.reverse()
+    chrom_names = [i[0] for i in chrom_list]
+    if rank == 0:
+        print(chrom_names)
+    #chrom_names = list(chrom_lens.keys())
+    #chrom_names.sort()
     
     indices = list(range(rank, len(chrom_names), n_proc))
     proc_chroms = [chrom_names[i] for i in indices]
     return proc_chroms
     
 def combine_cells(indir, outdir, outlier_threshold, chrom_lens, rank, n_proc):
+    print('in combine cells')
     try:
         os.makedirs(outdir)
     except:
         pass
     proc_chroms = get_proc_chroms(chrom_lens, rank, n_proc)
+    print(rank, proc_chroms)
     for chrom in proc_chroms:
+        print(rank, 'processing', chrom)
         output_filename = os.path.join(outdir, ".".join([chrom, "normalized", "combined", "bedpe"]))
         combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold)
         
