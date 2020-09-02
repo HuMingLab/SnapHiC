@@ -46,7 +46,7 @@ def main():
     if 'rwr' in args.steps:
         rwr_logfilename = os.path.join(rwr_dir, "log.rwr.txt")
         try:
-            os.makedirs(os.path.join(rwr_dir, 'rwr'))
+            os.makedirs(rwr_dir)
         except:
             pass
         if parallel_mode == 'nonparallel':
