@@ -150,38 +150,38 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     big_neighborhood = skimage.util.view_as_windows(mat, (2*upper_limit+1,2*upper_limit+1,num_cells), step = 1)
     small_neighborhood = skimage.util.view_as_windows(mat, (2*lower_limit+1,2*lower_limit+1,num_cells), step = 1)
     
-    print('neighborhoods created')
+    print('neighborhoods created');sys.stdout.flush()
     #reshape to (matsize, matsize, numcells, num_neighbors+1)
     big_neighborhood = np.squeeze(big_neighborhood.reshape(big_neighborhood.shape[0],\
                                                big_neighborhood.shape[0], 1, -1, num_cells))
     small_neighborhood = np.squeeze(small_neighborhood.reshape(small_neighborhood.shape[0],\
                                                small_neighborhood.shape[0], 1, -1, num_cells))
-    print('squeezed')
+    print('squeezed');sys.stdout.flush()
     small_neighborhood = np.swapaxes(small_neighborhood, -2, -1)
     big_neighborhood = np.swapaxes(big_neighborhood, -2, -1)
-    print('swapped')
+    print('swapped');sys.stdout.flush()
     big_neighborhood_counts = np.sum(~np.isnan(big_neighborhood), axis = -1)
     small_neighborhood_counts = np.sum(~np.isnan(small_neighborhood), axis = -1)
 
-    print('summing')
+    print('summing');sys.stdout.flush()
     #sum on the last axis (sum of neighbors)
     big_neighborhood = big_neighborhood.sum(axis = -1)
     small_neighborhood = small_neighborhood.sum(axis = -1)
     
-    print('trimming')
+    print('trimming');sys.stdout.flush()
     #remove edge cases that are used only as neighbors
     trim_size = upper_limit - lower_limit
     small_neighborhood = small_neighborhood[trim_size:-trim_size, trim_size:-trim_size]
     small_neighborhood_counts = small_neighborhood_counts[trim_size:-trim_size, trim_size:-trim_size]
-    print('and mat')
+    print('and mat');sys.stdout.flush()
     mat = mat[upper_limit:-upper_limit, upper_limit:-upper_limit]
     
-    print('subtraacting')
+    print('subtraacting');sys.stdout.flush()
     #local_neighborhood
     local_neighborhood = big_neighborhood - small_neighborhood
-    print('local neigh counts')
+    print('local neigh counts');sys.stdout.flush()
     local_neighborhood_counts = big_neighborhood_counts - small_neighborhood_counts
-    print('clearning up')
+    print('clearning up');sys.stdout.flush()
     #local_neighbors_count = (((upper_limit*2+1) ** 2 - (lower_limit*2+1) ** 2) - (upper_limit*2+1) + (lower_limit*2+1))/2
     del small_neighborhood, big_neighborhood, big_neighborhood_counts, small_neighborhood_counts
     gc.collect()
@@ -193,12 +193,12 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     #                            local_neighborhood.shape[2], axis=2)
     #print('new shape', neighbor_counts.shape)
     #print(len(np.where(neighbor_counts == 0)[0]))
-    print('getting finals')
+    print('getting finals');sys.stdout.flush()
     local_neighborhood /= local_neighborhood_counts
     del local_neighborhood_counts
     gc.collect()
     
-    print('pval computation')
+    print('pval computation');sys.stdout.flush()
     #compute averages over all cells for each point and each local neighborhood
     #print(local_neighborhood.shape, mat.shape)
     pvals = stats.ttest_rel(mat, local_neighborhood, axis = 2).pvalue
@@ -206,7 +206,7 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     local_neighborhood = np.mean(local_neighborhood, axis = -1)
     mat = np.mean(mat, axis = -1)
     
-    print('upper triangle')
+    print('upper triangle');sys.stdout.flush()
     #keep only upper triangle
     mat = np.triu(mat, 1)
     local_neighborhood = np.triu(local_neighborhood, 1)
@@ -215,7 +215,7 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     #print(mat.shape, local_neighborhood.shape, pvals.shape)
     #print(np.sum(np.isnan(pvals)))
     
-    print('creating df')
+    print('creating df');sys.stdout.flush()
     #convert matrix to dataframe
     mat = sp.sparse.coo_matrix(mat)
     local_neighborhood = sp.sparse.coo_matrix(local_neighborhood)
@@ -234,7 +234,7 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     result.loc[:,'j'] = result['j'].astype(int)
     result = result[result['j'] - result['i'] <= max_distance_bin]
     #print(max(result['i']), max(result['j']))
-    print('function finished')
+    print('function finished');sys.stdout.flush()
     #mat = mat.sum(axis = -1)
     return result
     

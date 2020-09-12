@@ -156,29 +156,30 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
                      (d['fdr_dist'] < fdr_thresh) &\
                      (d['outlier_count'] > outlier_threshold_mult*num_cells)]
         results = candidates.apply(apply_mean_filters, axis = 1, df = d, gap_large = gap_large, gap_small = gap_small, binsize = binsize)
-        print('thistobechecked', candidates.shape, results.shape)
-        columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'outlier_count', 'pvalue', \
+        if candidates.shape[0] > 0:
+            print('thistobechecked', candidates.shape, results.shape)
+            columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'outlier_count', 'pvalue', \
                    'fdr_chrom', 'fdr_dist', 'case_avg', 'control_avg', 'circle', 'donut', \
                    'horizontal', 'vertical', 'lower_left']
-        results = results[columns]
-        results.to_csv(os.path.join(outdir, ".".join(["nofilter", chrom, "bedpe"])), sep = "\t", index = False)
-        print('init', results.shape)
-        results = results[(results['outlier_count'] > results['circle'] * circle_threshold_mult) & \
+            results = results[columns]
+            results.to_csv(os.path.join(outdir, ".".join(["nofilter", chrom, "bedpe"])), sep = "\t", index = False)
+            print('init', results.shape)
+            results = results[(results['outlier_count'] > results['circle'] * circle_threshold_mult) & \
                           (results['outlier_count'] > results['donut'] * donut_threshold_mult) & \
                           (results['outlier_count'] > results['lower_left'] * lower_left_threshold_mult) & \
                           (results['outlier_count'] > results['horizontal'] * horizontal_threshold_mult) & \
                           (results['outlier_count'] > results['vertical'] * vertical_threshold_mult)]
-        print('pre', results.shape)
-        if filter_file:
-            filter_regions = pd.read_csv(filter_file, sep = "\t", header = None)
-            filter_regions.rename({0:'chr', 1:'start'}, axis = 1, inplace = True)
-            print('filters', filter_regions.shape)
-            for side in ['x1', 'y1']:
-               results = results.merge(filter_regions, left_on = ['chr1', side], \
+            print('pre', results.shape)
+            if filter_file:
+                filter_regions = pd.read_csv(filter_file, sep = "\t", header = None)
+                filter_regions.rename({0:'chr', 1:'start'}, axis = 1, inplace = True)
+                print('filters', filter_regions.shape)
+                for side in ['x1', 'y1']:
+                    results = results.merge(filter_regions, left_on = ['chr1', side], \
                                        right_on = ['chr', 'start'], how = "outer", indicator = True)
-               results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
-            results = results[columns]
-        print('post', results.shape)
+                    results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
+                results = results[columns]
+            print('post', results.shape)
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
         
 def find_candidates_integer(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
@@ -244,6 +245,11 @@ def combine_postprocessed_chroms(directory):
     output_filename_temp = os.path.join(directory, "combined.postprocessed.bedpe.temp")
     output_filename = os.path.join(directory, "combined.postprocessed.bedpe")
     input_filepattern = directory + '/clustered.candidates.*.bedpe'
+    if len(glob.glob(input_filepattern)) == 0:
+        summits_filename = os.path.join(directory, "combined.postprocessed.summits.bedpe")
+        with open(summits_filename, 'w') as ofile:
+            pass
+        return None
     headerfile = glob.glob(input_filepattern)[0]
     with open(headerfile, 'r') as ifile:
         headers = ifile.readline().split()

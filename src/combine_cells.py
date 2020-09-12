@@ -54,18 +54,18 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
         cells_data = hdf_file.create_dataset(chrom, chunks = (200000, len(input_filenames)), shape = (0, len(input_filenames)), \
                                                    maxshape = (None, len(input_filenames)))        
 
-        batch_size = 100
+        batch_size = 50
         for i, batch_start in enumerate(range(0, len(input_filenames), batch_size)):
             print("batch #", i, chrom)
             sys.stdout.flush()
             if os.path.exists(tempfile1):
                 os.remove(tempfile1)
-            output_file = open(tempfile1, 'w')
+            output_file = open(tempfile1, 'w');print("fope");sys.stdout.flush();
             batch_end = min(batch_start + batch_size, len(input_filenames))
-            batch_files = input_filenames[batch_start:batch_end]
-            command = 'eval paste $(for i in ${fnames=' + ' '.join(batch_files) + '}; do echo -n "<(cut -f7 $i) "; done)'
-            subprocess.check_call(command, stdout = output_file, shell = True, executable = "/bin/bash")
-            output_file.close()
+            batch_files = input_filenames[batch_start:batch_end];print("fope2");sys.stdout.flush();
+            command = 'eval paste $(for i in ${fnames=' + ' '.join(batch_files) + '}; do echo -n "<(cut -f7 $i) "; done)';print("fope3");sys.stdout.flush();
+            subprocess.check_call(command, stdout = output_file, shell = True, executable = "/bin/bash");print("fope4");sys.stdout.flush();
+            output_file.close();print("fope5");sys.stdout.flush();
             print("command completed", chrom)
             sys.stdout.flush()
             vals = pd.read_csv(tempfile1, sep = "\t", header = None).to_numpy()
@@ -79,7 +79,7 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
             sys.stdout.flush()
             cells_data[:,batch_start:batch_end] = vals
             print("vals transfered", chrom)
-            sys.stdout.flush()
+            sys.stdout.flush();print("loopend");sys.stdout.flush();
         hdf_file.close()
         print("hdf temp closed", chrom)
         sys.stdout.flush()
