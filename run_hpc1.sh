@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -q hotel
+#PBS -N snHiC_s1
+#PBS -l nodes=10:ppn=3
+#PBS -l walltime=50:00:00
+#PBS -l mem=1200GB
+#PBS -o log.${PBS_JOBNAME}.${PBS_JOBID}.log
+#PBS -e log.${PBS_JOBNAME}.${PBS_JOBID}.log.err
+#PBS -m abe
+
+indir=""
+suffix=""
+outdir=""
+chrs=""
+pos=""
+chrlen="ext/mm10.chrom.sizes"
+genome="mm10"
+fdr_thresh=0.1
+filter_file="ext/mm10_filter_regions.txt"
+steps="bin rwr"
+
+mpirun -np 30 python ./snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --fdr-threshold $fdr_thresh --filter-file $filter_file --steps $steps --parallel
+
