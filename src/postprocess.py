@@ -8,6 +8,7 @@ from scipy import ndimage
 from scipy.spatial import distance
 from collections import defaultdict
 import subprocess
+import h5py
 
 def get_proc_chroms(chrom_lens, rank, n_proc):
     chrom_list = [(k, chrom_lens[k]) for k in list(chrom_lens.keys())]
@@ -123,8 +124,10 @@ def apply_mean_filters(candidate, df, gap_large, gap_small, binsize):
     candidate['lower_left'] = 0
     candidate['horizontal'] = 0
     candidate['vertical'] = 0
-    neighbors = df[(abs(df['x1'] - candidate['x1']) <= gap_large * binsize) & (abs(df['y1'] - candidate['y1']) <= gap_large * binsize) &\
-                  (~((abs(df['x1'] - candidate['x1']) <= gap_small * binsize) & (abs(df['y1'] - candidate['y1']) <= gap_small * binsize)))].copy()
+    neighbors = df[(abs(df['x1'] - candidate['x1']) <= gap_large * binsize) & \
+                   (abs(df['y1'] - candidate['y1']) <= gap_large * binsize) & \
+                  (~((abs(df['x1'] - candidate['x1']) <= gap_small * binsize) & \
+                     (abs(df['y1'] - candidate['y1']) <= gap_small * binsize)))].copy()
     if neighbors.shape[0] > 0:
         candidate['circle'] = neighbors['outlier_count'].mean()
         neighbors['type'] = 'donut'
@@ -143,10 +146,15 @@ def apply_mean_filters(candidate, df, gap_large, gap_small, binsize):
     return candidate
 
 def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
-                    candidate_upper_thresh, binsize, dist, max_mem, num_cells, case_to_control_diff_threshold, \
+                    candidate_upper_thresh, binsize, dist, max_mem, case_to_control_diff_threshold, \
                     circle_threshold_mult, donut_threshold_mult, lower_left_threshold_mult, \
-                    horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file):
+                    horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file, logger, rank):
     for chrom in proc_chroms:
+        logger.write(f'\tprocessor {rank}: finding peack candidates for {chrom}.', \
+                             append_time = False, allow_all_ranks = True, verbose_level = 2)
+        hic_chrom_filename = os.path.join(indir, "..", "hic", ".".join([chrom, "normalized", "combined", "bedpe"]))
+        with h5py.File(hic_chrom_filename + ".cells.hdf", 'r') as ifile:
+            num_cells = ifile[chrom].shape[1]
         infile = os.path.join(indir, ".".join(["significances", chrom, "bedpe"]))
         d = pd.read_csv(infile, sep = "\t")
         candidates = d[(d['y1'] - d['x1'] <= candidate_upper_thresh) & \
@@ -155,32 +163,36 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
                      (d['case_avg'] - d['control_avg'] > case_to_control_diff_threshold) & \
                      (d['fdr_dist'] < fdr_thresh) &\
                      (d['outlier_count'] > outlier_threshold_mult*num_cells)]
+        logger.write(f'\tprocessor {rank}: {candidates.shape[0]} candidates found for {chrom}.', \
+                             append_time = False, allow_all_ranks = True, verbose_level = 3)
         results = candidates.apply(apply_mean_filters, axis = 1, df = d, gap_large = gap_large, gap_small = gap_small, binsize = binsize)
         if candidates.shape[0] > 0:
-            print('thistobechecked', candidates.shape, results.shape)
+            #print('thistobechecked', candidates.shape, results.shape)
             columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'outlier_count', 'pvalue', \
                    'fdr_chrom', 'fdr_dist', 'case_avg', 'control_avg', 'circle', 'donut', \
                    'horizontal', 'vertical', 'lower_left']
             results = results[columns]
             results.to_csv(os.path.join(outdir, ".".join(["nofilter", chrom, "bedpe"])), sep = "\t", index = False)
-            print('init', results.shape)
+            #print('init', results.shape)
             results = results[(results['outlier_count'] > results['circle'] * circle_threshold_mult) & \
                           (results['outlier_count'] > results['donut'] * donut_threshold_mult) & \
                           (results['outlier_count'] > results['lower_left'] * lower_left_threshold_mult) & \
                           (results['outlier_count'] > results['horizontal'] * horizontal_threshold_mult) & \
                           (results['outlier_count'] > results['vertical'] * vertical_threshold_mult)]
-            print('pre', results.shape)
+            #print('pre', results.shape)
             if filter_file:
                 filter_regions = pd.read_csv(filter_file, sep = "\t", header = None)
                 filter_regions.rename({0:'chr', 1:'start'}, axis = 1, inplace = True)
-                print('filters', filter_regions.shape)
+                #print('filters', filter_regions.shape)
                 for side in ['x1', 'y1']:
                     results = results.merge(filter_regions, left_on = ['chr1', side], \
                                        right_on = ['chr', 'start'], how = "outer", indicator = True)
                     results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
                 results = results[columns]
-            print('post', results.shape)
+            #print('post', results.shape)
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
+        logger.write(f'\tprocessor {rank}: {chrom} is ready for clustering.', \
+                             append_time = False, allow_all_ranks = True, verbose_level = 2)
         
 def find_candidates_integer(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
                     candidate_upper_thresh, binsize, dist, max_mem, num_cells, case_to_control_diff_threshold, \
@@ -284,12 +296,14 @@ def label_propagate(dist_matrix_binary):
                         peak_to_label[peak] = label_candidate
     return label_to_peaks
 
-def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
+def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap, logger, rank):
     for chrom in proc_chroms:
-        print('processing ', chrom)
+        logger.write(f'\tprocessor {rank}: starting clustering for {chrom}.', \
+                             append_time = False, allow_all_ranks = True, verbose_level = 2)
+        #print('processing ', chrom)
         input_filename = os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"]))
         d = pd.read_csv(input_filename, sep = "\t")
-        print(d.shape, 'chrom')
+        #print(d.shape, 'chrom')
         if d.shape[0] > 0:
             #compute pairwise distances
             d.loc[:,'i'] = (d.loc[:,'x1'] // binsize).astype(int)
@@ -380,21 +394,24 @@ def cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap):
             
             #final = pd.concat([singletons, clusters], axis = 0, sort = False)
             #final.drop(["i", "j"], axis = 1, inplace = True)
-            #final.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), sep = "\t", index = False)
+           #final.to_csv(os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"])), sep = "\t", index = False)
+        logger.write(f'\tprocessor {rank}: postprocessing of {chrom} completed', \
+                             append_time = False, allow_all_ranks = True, verbose_level = 2)
 
 def postprocess(indir, outdir, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
                     candidate_upper_thresh, binsize, dist, clustering_gap, rank, n_proc, max_mem, \
-                    num_cells, case_to_control_diff_threshold, circle_threshold_mult, donut_threshold_mult, \
+                    case_to_control_diff_threshold, circle_threshold_mult, donut_threshold_mult, \
                     lower_left_threshold_mult, horizontal_threshold_mult, vertical_threshold_mult, \
-                    outlier_threshold_mult, filter_file, summit_gap):
+                    outlier_threshold_mult, filter_file, summit_gap, logger):
+    logger.set_rank(rank)
     try:
         os.makedirs(outdir)
     except:
         pass
     proc_chroms = get_proc_chroms(chrom_lens, rank, n_proc)
     find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
-                    candidate_upper_thresh, binsize, dist, max_mem, num_cells, case_to_control_diff_threshold, \
+                    candidate_upper_thresh, binsize, dist, max_mem, case_to_control_diff_threshold, \
                     circle_threshold_mult, donut_threshold_mult, lower_left_threshold_mult, \
-                    horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file)
-    cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap)
+                    horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file, logger, rank)
+    cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap, logger, rank)
    

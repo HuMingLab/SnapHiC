@@ -70,7 +70,8 @@ def bin_file(filename, binsize, outdir, chr_columns, pos_columns, file_suffix, l
     df.to_csv(os.path.join(outdir, name + ".bedpe"), sep = "\t", header = None, index = False)
     return name
 
-def bin_sets(indir, file_suffix, binsize = 1e4, outdir = None, chr_columns = [2, 6], pos_columns = [3, 7], low_cutoff = 5e3, n_proc = 1, rank = 0):
+def bin_sets(indir, file_suffix, binsize = 1e4, outdir = None, chr_columns = [2, 6], pos_columns = [3, 7], low_cutoff = 5e3, n_proc = 1, rank = 0, logger = None):
+    logger.set_rank(rank)
     if not outdir:
         outdir = indir
         outdir = os.path.join(outdir, "binned_data")
@@ -79,7 +80,7 @@ def bin_sets(indir, file_suffix, binsize = 1e4, outdir = None, chr_columns = [2,
     try:
         os.makedirs(outdir)
     except Exception as e:
-        print(e)
+        #print(e, 'excepting error in binning')
         pass
 
     #setnames = []

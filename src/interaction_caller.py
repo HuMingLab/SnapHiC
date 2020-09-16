@@ -10,7 +10,6 @@ import gc
 import sys
 import h5py
 
-
 def get_proc_chroms(chrom_lens, rank, n_proc):
     chrom_list = [(k, chrom_lens[k]) for k in list(chrom_lens.keys())]
     chrom_list.sort(key = lambda x: x[1])
@@ -57,26 +56,19 @@ def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_l
         keeprows = list(np.where((d['i'] >= matrix_upper_bound) & (d['j'] < matrix_lower_bound))[0])
         d_portion = d.iloc[keeprows, 0:6].reset_index(drop = True)
         d_portion.columns = ['chr1','x1','x2','chr2','y1','y2']
-        print(d_portion, 'd_portions shape')
+        #print(d_portion, 'd_portions shape')
         #skiprows = all_rows.difference(keeprows)
         hdf_file = h5py.File(chrom_filename + '.cells.hdf', 'r')
         portion = hdf_file[list(hdf_file.keys())[0]]
-        print(type(keeprows))
-        if isinstance(keeprows, list):
-            print(len(keeprows))
-            if len(keeprows) > 0:
-                print(type(keeprows[0]))
-        else:
-            print('notlist')
         portion = portion[keeprows, :]
         hdf_file.close()
         if portion.shape[0] == 0:
             continue
         portion = pd.DataFrame(portion)
-        print('portions shape', portion.shape)
+        #print('portions shape', portion.shape)
         portion = pd.concat([d_portion, portion], axis = 1)
-        print('concatted portion', portion.shape)
-        print(np.where(portion.isnull().sum() > 0))
+        #print('concatted portion', portion.shape)
+        #print(np.where(portion.isnull().sum() > 0))
         portion['i'] =  (portion.loc[:,'x1'] // binsize).astype(int)
         portion['j'] =  (portion.loc[:,'y1'] // binsize).astype(int)
         #portion_old = d[(d['i'] >= matrix_upper_bound) & \
@@ -92,7 +84,7 @@ def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_l
         #print('here', portion.columns)
         #print(portion.head())
         #print(portion.dtypes[:20])
-        sys.stdout.flush()
+        #sys.stdout.flush()
         for cell_index in range(num_cells):
             cell_mat = sp.sparse.csr_matrix((portion.iloc[:, 6 + cell_index], \
                                             ((portion['i'] - matrix_upper_bound), \
@@ -145,77 +137,62 @@ def get_neighbor_counts_matrix(shape, gap_large, gap_small, max_distance):
 def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index, max_distance_bin):
     gc.collect()
     #sliding window
-    print('in function')
-    sys.stdout.flush()
+    #print('in function')
+    #sys.stdout.flush()
     big_neighborhood = skimage.util.view_as_windows(mat, (2*upper_limit+1,2*upper_limit+1,num_cells), step = 1)
     small_neighborhood = skimage.util.view_as_windows(mat, (2*lower_limit+1,2*lower_limit+1,num_cells), step = 1)
     
-    print('neighborhoods created');sys.stdout.flush()
     #reshape to (matsize, matsize, numcells, num_neighbors+1)
     big_neighborhood = np.squeeze(big_neighborhood.reshape(big_neighborhood.shape[0],\
                                                big_neighborhood.shape[0], 1, -1, num_cells))
     small_neighborhood = np.squeeze(small_neighborhood.reshape(small_neighborhood.shape[0],\
                                                small_neighborhood.shape[0], 1, -1, num_cells))
-    print('squeezed');sys.stdout.flush()
     small_neighborhood = np.swapaxes(small_neighborhood, -2, -1)
     big_neighborhood = np.swapaxes(big_neighborhood, -2, -1)
-    print('swapped');sys.stdout.flush()
     big_neighborhood_counts = np.sum(~np.isnan(big_neighborhood), axis = -1)
     small_neighborhood_counts = np.sum(~np.isnan(small_neighborhood), axis = -1)
 
-    print('summing');sys.stdout.flush()
     #sum on the last axis (sum of neighbors)
     big_neighborhood = big_neighborhood.sum(axis = -1)
     small_neighborhood = small_neighborhood.sum(axis = -1)
     
-    print('trimming');sys.stdout.flush()
     #remove edge cases that are used only as neighbors
     trim_size = upper_limit - lower_limit
     small_neighborhood = small_neighborhood[trim_size:-trim_size, trim_size:-trim_size]
     small_neighborhood_counts = small_neighborhood_counts[trim_size:-trim_size, trim_size:-trim_size]
-    print('and mat');sys.stdout.flush()
     mat = mat[upper_limit:-upper_limit, upper_limit:-upper_limit]
     
-    print('subtraacting');sys.stdout.flush()
     #local_neighborhood
     local_neighborhood = big_neighborhood - small_neighborhood
-    print('local neigh counts');sys.stdout.flush()
     local_neighborhood_counts = big_neighborhood_counts - small_neighborhood_counts
-    print('clearning up');sys.stdout.flush()
     #local_neighbors_count = (((upper_limit*2+1) ** 2 - (lower_limit*2+1) ** 2) - (upper_limit*2+1) + (lower_limit*2+1))/2
     del small_neighborhood, big_neighborhood, big_neighborhood_counts, small_neighborhood_counts
     gc.collect()
     
     #for each cell compute the average value over the neighborhood
-    #print('local_neighborhood shape:', local_neighborhood.shape)
-    #print('neighbors_count_mat shape: ' , neighbor_counts_matrix.shape)
-    #neighbor_counts = np.repeat(neighbor_counts_matrix[:local_neighborhood.shape[0], :local_neighborhood.shape[0], np.newaxis], \
-    #                            local_neighborhood.shape[2], axis=2)
-    #print('new shape', neighbor_counts.shape)
-    #print(len(np.where(neighbor_counts == 0)[0]))
-    print('getting finals');sys.stdout.flush()
+    ##print('local_neighborhood shape:', local_neighborhood.shape)
+    ##print('neighbors_count_mat shape: ' , neighbor_counts_matrix.shape)
+    ##neighbor_counts = np.repeat(neighbor_counts_matrix[:local_neighborhood.shape[0], :local_neighborhood.shape[0], np.newaxis], \
+    ##                            local_neighborhood.shape[2], axis=2)
+    ##print('new shape', neighbor_counts.shape)
+    ##print(len(np.where(neighbor_counts == 0)[0]))
     local_neighborhood /= local_neighborhood_counts
     del local_neighborhood_counts
     gc.collect()
     
-    print('pval computation');sys.stdout.flush()
     #compute averages over all cells for each point and each local neighborhood
-    #print(local_neighborhood.shape, mat.shape)
+    ##print(local_neighborhood.shape, mat.shape)
     pvals = stats.ttest_rel(mat, local_neighborhood, axis = 2).pvalue
-    print(pvals.shape)
+    ##print(pvals.shape)
     local_neighborhood = np.mean(local_neighborhood, axis = -1)
     mat = np.mean(mat, axis = -1)
     
-    print('upper triangle');sys.stdout.flush()
     #keep only upper triangle
     mat = np.triu(mat, 1)
     local_neighborhood = np.triu(local_neighborhood, 1)
     pvals = np.triu(pvals, 1)
     pvals = np.nan_to_num(pvals, nan = 1)
-    #print(mat.shape, local_neighborhood.shape, pvals.shape)
-    #print(np.sum(np.isnan(pvals)))
     
-    print('creating df');sys.stdout.flush()
     #convert matrix to dataframe
     mat = sp.sparse.coo_matrix(mat)
     local_neighborhood = sp.sparse.coo_matrix(local_neighborhood)
@@ -233,36 +210,37 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     result.loc[:,'i'] = result['i'].astype(int)
     result.loc[:,'j'] = result['j'].astype(int)
     result = result[result['j'] - result['i'] <= max_distance_bin]
-    #print(max(result['i']), max(result['j']))
-    print('function finished');sys.stdout.flush()
-    #mat = mat.sum(axis = -1)
     return result
     
 def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_limit_lower = 3, \
-                      neighborhood_limit_upper = 5, rank = 0, n_proc = 1, max_mem = 2):
+                      neighborhood_limit_upper = 5, rank = 0, n_proc = 1, max_mem = 2, logger = None):
+    logger.set_rank(rank)
     try:
         os.makedirs(outdir)
     except:
         pass
     
     proc_chroms = get_proc_chroms(chrom_lens, rank, n_proc)
-    print(rank, proc_chroms)
-    sys.stdout.flush()
+    #print(rank, proc_chroms)
+    #sys.stdout.flush()
     for chrom in proc_chroms:
-        print(rank, chrom)
-        chrom_filename = os.path.join(indir, ".".join([chrom, "normalized", "combined", "bedpe"]))
+        logger.write(f'\tprocessor {rank}: computing for chromosome {chrom}', verbose_level = 1, allow_all_ranks = True)
+        #print(rank, chrom)
         #d = pd.read_csv(chrom_filename, sep = "\t", header = None, usecols = [0,1,2,3,4,5, num_cells + 6])
         ##command = "awk -F '\t' '{print NF; exit}' " + chrom_filename
         ##proc_output = subprocess.check_output(command, shell = True, executable = "/bin/bash")
         ##num_cells = int(proc_output) - 7
+        chrom_filename = os.path.join(indir, ".".join([chrom, "normalized", "combined", "bedpe"]))
         with h5py.File(chrom_filename + ".cells.hdf", 'r') as ifile:
             num_cells = ifile[chrom].shape[1]
-        print('num_cells', num_cells)
-        sys.stdout.flush()
+        logger.write(f'\tprocessor {rank}: detected {num_cells} cells for chromosome {chrom}', \
+                             append_time = False, allow_all_ranks = True, verbose_level = 2)
+        #print('num_cells', num_cells)
+        #sys.stdout.flush()
         d = pd.read_csv(chrom_filename, sep = "\t", header = None)
         #num_cells = d.shape[1] - 7
         matrix_max_size = determine_dense_matrix_size(num_cells, dist, binsize, max_mem)
-        print(rank, matrix_max_size)
+        #print(rank, matrix_max_size)
         submatrices = convert_sparse_dataframe_to_dense_matrix(d, matrix_max_size, \
                                                                dist, binsize, neighborhood_limit_upper, \
                                                                num_cells, chrom_lens[chrom], chrom_filename)
@@ -274,12 +252,14 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
         #                                                 neighborhood_limit_upper, \
         #                                                 neighborhood_limit_lower, max_distance_bin)
         #print('num zeros_2d', len(np.where(neighbor_counts_matrix==0)[0]))
-        print('going in for')
-        sys.stdout.flush()
+        #print('going in for')
+        #sys.stdout.flush()
         for i, (submatrix, start_index) in enumerate(submatrices):
+            logger.write(f'\tprocessor {rank}: computing background for batch {i} of {chrom}, start index = {start_index}', \
+                              verbose_level = 3, allow_all_ranks = True, append_time = False)
             #print('iteration', i)
-            print('start_index', start_index)
-            sys.stdout.flush()
+            #print('start_index', start_index)
+            #sys.stdout.flush()
             if i > 0:
                 limit =  i * (matrix_max_size - max_distance_bin) #- neighborhood_limit_upper
                 #results[-1] = results[-1][results[-1]['i'] < limit]
@@ -291,16 +271,16 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
                                                   max_distance_bin)
             #print('returned')
             results.append(submat_result)
-        print(rank, 'offtheloop')
-        print(rank, len(results))
+        #print(rank, 'offtheloop')
+        #print(rank, len(results))
         results = pd.concat(results, axis = 0)
-        print(rank, chrom, results.shape[0])
+        #print(rank, chrom, results.shape[0])
         min_index = 0
         max_index = results['j'].max()
-        print(max_index, min_index, results['i'].dtype, results['j'].dtype, neighborhood_limit_upper)
+        #print(max_index, min_index, results['i'].dtype, results['j'].dtype, neighborhood_limit_upper)
         results = results[(results['i'] >= min_index + neighborhood_limit_upper) & \
                           (results['j'] <= max_index - neighborhood_limit_upper)]
-        print(results.shape[0])
+        #print(results.shape[0])
 
         
         def compute_fdr_by_dist(d):
@@ -314,15 +294,17 @@ def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_lim
         results.loc[:,'i'] = (results['i'] * binsize).astype(int)
         results.loc[:,'j'] = (results['j'] * binsize).astype(int)
        
-        print('finishing', d.shape) 
+        #print('finishing', d.shape) 
         d = d.iloc[:, list(range(7))]
         d.columns = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'outlier_count']
         #print(d.head())
         #print(results.head())
         #d = d.merge(results, left_on = ['x1', 'y1'], right_on = ['i', 'j'], how = "outer")
         d = d.merge(results, left_on = ['x1', 'y1'], right_on = ['i', 'j'])
-        print(d.shape)
+        #print(d.shape)
         d.drop(['i', 'j'], axis =1, inplace = True)
+        logger.write(f'\tprocessor {rank}: computation for {chrom} completed. writing to file.', \
+                             append_time = False, allow_all_ranks = True, verbose_level = 2)
         d.to_csv(os.path.join(outdir, ".".join(["significances", chrom, "bedpe"])), sep = "\t", index = False)   
                         
                         
