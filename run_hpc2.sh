@@ -8,6 +8,8 @@
 #PBS -e log.${PBS_JOBNAME}.${PBS_JOBID}.log.err
 #PBS -m abe
 
+cd ${PBS_O_WORKDIR}
+
 indir=""
 suffix=""
 outdir=""

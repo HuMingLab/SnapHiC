@@ -55,7 +55,7 @@ Please note that in order to run the code in parallel mode (e.g. in cluster comp
 A complete listing of all the permitted parameters to the software can be seen by using `--help` argument.  
 
 ### 3. Testing  
-You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC) to test your installation of the program. This dataset contains a subset of 100 cells from the Ecker''s ODC data (hg19). The output for this set is [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC).   
+You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC) to test your installation of the program. This dataset contains a subset of 100 cells from the Ecker''s ODC data (hg19). The output for this set is [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC).   
 
 ### 4. Recommendations for parallel setting:  
 As mentioned earlier, you would want to use as many processors as possible for the RWR step (first script), but you want to provide enough memory for the rest of the steps.  

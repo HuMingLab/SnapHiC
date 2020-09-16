@@ -243,7 +243,7 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, ignore_sets = 
         #print(completed_pairs[:2])
         #print(jobs[:2])
         jobs = [job for job in jobs if (job[2], job[0]) not in completed_pairs]
-        print('new jobs len', len(jobs))
+        #print('new jobs len', len(jobs))
     jobs.sort()
     indices = list(range(rank, len(jobs), n_proc))
     #random.seed(4)

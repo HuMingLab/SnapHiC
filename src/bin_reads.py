@@ -82,7 +82,7 @@ def bin_sets(indir, file_suffix, binsize = 1e4, outdir = None, chr_columns = [2,
     except Exception as e:
         #print(e, 'excepting error in binning')
         pass
-
+    #print(len(proc_filenames))
     #setnames = []
     for filename in proc_filenames:
         setname = bin_file(filename, binsize, outdir, chr_columns, pos_columns, file_suffix, low_cutoff)
