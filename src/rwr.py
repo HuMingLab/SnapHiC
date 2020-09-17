@@ -411,6 +411,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
                 #df = df.groupby(df['y1'] - df['x1'], as_index = False).apply(normalize_along_diagonal).reset_index(drop = True)
                 df.sort_values(['x1', 'y1'], inplace = True)
                 df.to_csv(output_filename, sep = "\t", header = None, index = False)
+                del df
         if os.path.exists(retry_filename):
             logger.write(f'\tprocessor {rank}: Attempting to re-run failed jobs. Attempt: {attempt_counter + 1}/{attempts_allowed}', \
                               append_time = False, allow_all_ranks = True, verbose_level = 3)

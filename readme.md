@@ -55,15 +55,16 @@ Please note that in order to run the code in parallel mode (e.g. in cluster comp
 A complete listing of all the permitted parameters to the software can be seen by using `--help` argument.  
 
 ### 3. Testing  
-You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC) to test your installation of the program. This dataset contains a subset of 100 cells from the Ecker''s ODC data (hg19). The output for this set is [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC).   
+You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC) to test your installation of the program. This dataset contains a subset of 100 cells from the Ecker''s ODC data (hg19). The output for this set is [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC).  
+Run files that we have used to generate these results are also included above in *run_test_odc_step1.sh* and *run_test_odc_step2.sh* scripts. 
 
 ### 4. Recommendations for parallel setting:  
 As mentioned earlier, you would want to use as many processors as possible for the RWR step (first script), but you want to provide enough memory for the rest of the steps.  
 The specific size of memory and processors per node will be different based on the genome being used and the number of cells in the dataset. Here are the setting we have used for our datasets.  
 | genome | #cells | binsize | run step | nodes | processors per node | memory per node | runtime |  
 | --- | --- | --- | --- | --- | --- | --- | --- |  
-| hg19 | 100 | 10,000 | 1 (bin rwr) | 15 | 2 | 120GB | 3 hrs |  
-| hg19 | 100 | 10,000 | 2 (hic inter. postproc.) | 10 | 1 | 120GB | 4 hrs |  
-| mm10 | 100 | 10,000 | 1 (bin rwr) | 10 | 3 | 120GB | 2 hrs |  
-| mm10 | 100 | 10,000 | 2 (hic inter. postproc.) | 10 | 2 | 120GB | 2 hrs |
+| hg19 | 100 | 10,000 | 1 (bin rwr) | 15 | 2 | 120GB | 7.5 hrs |  
+| hg19 | 100 | 10,000 | 2 (hic inter. postproc.) | 10 | 1 | 120GB | 1 hr |  
+| mm10 | 100 | 10,000 | 1 (bin rwr) | 10 | 3 | 120GB | -- hrs |  
+| mm10 | 100 | 10,000 | 2 (hic inter. postproc.) | 10 | 2 | 120GB | -- hrs |
 
