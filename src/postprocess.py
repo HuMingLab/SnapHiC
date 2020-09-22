@@ -155,6 +155,7 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
         hic_chrom_filename = os.path.join(indir, "..", "hic", ".".join([chrom, "normalized", "combined", "bedpe"]))
         with h5py.File(hic_chrom_filename + ".cells.hdf", 'r') as ifile:
             num_cells = ifile[chrom].shape[1]
+        #num_cells = 39
         infile = os.path.join(indir, ".".join(["significances", chrom, "bedpe"]))
         d = pd.read_csv(infile, sep = "\t")
         candidates = d[(d['y1'] - d['x1'] <= candidate_upper_thresh) & \
@@ -273,6 +274,9 @@ def combine_postprocessed_chroms(directory):
     proc.communicate()
     d = pd.read_csv(output_filename, sep = "\t")
     d = d[d['summit'] == 1]
+    for i in ['x1', 'x2', 'y1', 'y2']:
+        d[i] = d[i].astype(int)
+    d.drop('fdr_chrom', axis = 1, inplace = True)
     summits_filename = os.path.join(directory, "combined.postprocessed.summits.bedpe")
     d.to_csv(summits_filename, sep = "\t", index = False)
 

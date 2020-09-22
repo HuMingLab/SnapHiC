@@ -1,17 +1,17 @@
-# snapHiC 
+# snapHiC: Single Nucleus Analysis Pipeline for HiC Data 
 ## Chromatin Interaction Caller For Single Cell HiC Data
 ### 1. Installation
 Prior to run, please ensure following modules are installed in your python3 environment:
-- numpy
-- scipy
-- statsmodels
-- pandas
-- skimage (scikit-image)
-- networkx
-- mpi4py (optional but recommended; required for run in HPC environment)
+- numpy (v1.19.1)
+- scipy (v1.5.0)
+- statsmodels (v0.11.1)
+- pandas (v0.24.2)
+- skimage (scikit-image) (v0.16.2)
+- networkx (v2.4)
+- mpi4py (optional but recommended; required for run in HPC environment) (v3.0.3)
 
 ### 2. Run
-#### TLDR;
+#### How to run:
 1. Put all the mapped files in one directory. For each read pair your file should have at least 2 columns for chromsomes and 2 columns for the mapped position (bp).  
 2. Either one of the following options will work but the HPC cluster is the recommended method:  
 &Tab;**(I) For HPC clusters with a job scheduler such as PBS or SLURM**:  
