@@ -14,7 +14,7 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
     if args.summit_gap == -1:
-        args.summit_gap = args.binsize
+        args.summit_gap = 2 * args.binsize
     #print(args.filter_file)
     with open(args.filter_file) as ifile:
         lines = ifile.readlines()
