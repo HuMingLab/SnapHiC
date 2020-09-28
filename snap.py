@@ -24,7 +24,8 @@ def main():
         os.makedirs(args.outdir)
     if parallel_mode == "parallel":
         parallel_properties['comm'].Barrier()
-    logger = src.logger.Logger(f'{args.outdir}/snapHiC.log', rank = rank, verbose_threshold = args.verbose)
+    threaded = True if parallel_mode == "threaded" else False
+    logger = src.logger.Logger(f'{args.outdir}/snapHiC.log', rank = rank, verbose_threshold = args.verbose, threaded = threaded)
     #logger.set_rank(rank)
     logger.dump_args(args)
     logger.write(f'Starting operation in {parallel_mode} mode')
@@ -89,15 +90,17 @@ def main():
             rwr_logfile.Close()
             parallel_properties['comm'].Barrier()
         elif parallel_mode == 'threaded':
-            rwr_logfile = open(rwr_logfilename, 'a')
-            from multiprocessing import Lock
-            threaded_lock = Lock()
+            #rwr_logfile = open(rwr_logfilename, 'a')
+            rwr_logfile  = None
+            #from multiprocessing import Lock
+            m = multiprocessing.Manager()
+            threaded_lock = m.Lock()
             params = [(bin_dir, rwr_dir, args.binsize, args.alpha, args.dist, chrom_dict, \
                       True, n_proc, i, args.genome, None, False, rwr_logfile, \
                       rwr_logfilename, threaded_lock, logger) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
                 pool.starmap(get_rwr_for_all, params)
-            rwr_logfile.close()
+            #rwr_logfile.close()
         logger.write('RWR computation completed for all cells')
         logger.flush()
         #print("rwr computed")
@@ -207,7 +210,7 @@ def main():
                         args.vertical_threshold_multiplier, args.outlier_threshold_multiplier, \
                         args.filter_file, args.summit_gap, logger) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
-                pool.map(postprocess, params)
+                pool.starmap(postprocess, params)
         if rank == 0:
             combine_postprocessed_chroms(directory = postproc_dir)
         logger.write('Postprocessing step completed')

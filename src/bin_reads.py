@@ -21,11 +21,13 @@ def extract_setname(filepath, suffix):
 
 
 def get_filepaths(input_dir, suffix = "valid_pairs.rm_hotspot.sorted.txt"):
+    #print(os.listdir(input_dir), suffix)
     filenames = [os.path.join(input_dir, name) for name in os.listdir(input_dir) if name.endswith(suffix)]
     return filenames
 
 
 def get_proc_filenames(filenames, n_proc = NUM_PROCESSOR, rank = RANK):
+    #print(rank, len(filenames))
     indices = list(range(rank, len(filenames), n_proc))
     proc_fnames = [filenames[i] for i in indices]
     return proc_fnames
@@ -71,7 +73,8 @@ def bin_file(filename, binsize, outdir, chr_columns, pos_columns, file_suffix, l
     return name
 
 def bin_sets(indir, file_suffix, binsize = 1e4, outdir = None, chr_columns = [2, 6], pos_columns = [3, 7], low_cutoff = 5e3, n_proc = 1, rank = 0, logger = None):
-    logger.set_rank(rank)
+    if logger:
+        logger.set_rank(rank)
     if not outdir:
         outdir = indir
         outdir = os.path.join(outdir, "binned_data")

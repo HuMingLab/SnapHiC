@@ -332,7 +332,8 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
 def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, 
                 normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None, parallel = False, 
                                 rwr_logfile = None, rwr_logfilename = None, threaded_lock = None, logger = None):
-    logger.set_rank(rank)
+    if logger:
+        logger.set_rank(rank)
     if not outdir:
         outdir = indir
         outdir = os.path.join(outdir, "rwr")
@@ -340,6 +341,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         os.makedirs(outdir)
     except:
         pass
+    rwr_logfile = open(rwr_logfilename, 'a') if rwr_logfilename else None
     #print('rwr rank', rank)
     #ignore_filename = os.path.join(outdir, 'ignore_sets.txt')
     #ammend_ignore_list(rwr_logfilename, ignore_filename)
@@ -432,6 +434,8 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
     if attempt_counter == attempts_allowed:
         logger.write(f'\tprocessor {rank}: Failed to finish assigned jobs after {attempts_allowed} attempts.')
         #return df
+    if rwr_logfile:
+        rwr_logfile.close()
 
 if __name__ == "__main__":
     pass

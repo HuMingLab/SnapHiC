@@ -4,9 +4,11 @@ import time
 import os
 
 class Logger(object):
-    def __init__(self, logfile, rank = 0, verbose_threshold = 0):
-        self.terminal = sys.stdout
-        self.log = open(logfile, "a")
+    def __init__(self, logfile, rank = 0, verbose_threshold = 0, threaded = False):
+        self.threaded = threaded
+        self.logfilename = logfile
+        self.log = open(self.logfilename, "a") if not self.threaded else None
+        self.terminal = sys.stdout if not self.threaded else None
         self.verbose_threshold = verbose_threshold
         self.rank = rank
 
@@ -16,13 +18,20 @@ class Logger(object):
         if message[-1] != '\n':
             message += '\n'
         if verbose_level <= self.verbose_threshold:
-            if self.rank == 0 or allow_all_ranks:
+            if (self.rank == 0 or allow_all_ranks) and not self.threaded:
                 self.terminal.write(message)
                 self.log.write(message)
+            elif (self.rank == 0 or allow_all_ranks) and self.threaded:
+                with open(self.logfilename, "a") as logfile:
+                    logfile.write(message)
+                sys.stdout.write(message)
 
     def flush(self):
-        self.log.flush()
-        self.terminal.flush()
+        if not self.threaded:
+            self.log.flush()
+            self.terminal.flush()
+        else:
+            sys.stdout.flush()
 
     def set_rank(self, rank):
         self.rank = rank
