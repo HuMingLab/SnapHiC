@@ -435,7 +435,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
     if attempt_counter == attempts_allowed:
         logger.write(f'\tprocessor {rank}: Failed to finish assigned jobs after {attempts_allowed} attempts.')
         #return df
-    if rwr_logfile:
+    if rwr_logfile and not parallel:
         rwr_logfile.close()
 
 if __name__ == "__main__":
