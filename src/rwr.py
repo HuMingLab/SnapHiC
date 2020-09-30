@@ -341,7 +341,8 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         os.makedirs(outdir)
     except:
         pass
-    rwr_logfile = open(rwr_logfilename, 'a') if rwr_logfilename else None
+    if rwr_logfile is None:
+        rwr_logfile = open(rwr_logfilename, 'a') if rwr_logfilename else None
     #print('rwr rank', rank)
     #ignore_filename = os.path.join(outdir, 'ignore_sets.txt')
     #ammend_ignore_list(rwr_logfilename, ignore_filename)
