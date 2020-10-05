@@ -16,8 +16,8 @@ def main():
     if args.summit_gap == -1:
         args.summit_gap = 2 * args.binsize
     #print(args.filter_file)
-    with open(args.filter_file) as ifile:
-        lines = ifile.readlines()
+    #with open(args.filter_file) as ifile:
+    #    lines = ifile.readlines()
     #print(lines[0])
     parallel_mode, rank, n_proc, parallel_properties = determine_parallelization_options(args.parallel, args.threaded, args.num_proc)
     if rank == 0 and not os.path.exists(args.outdir):
