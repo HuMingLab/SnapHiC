@@ -8,6 +8,7 @@ Prior to run, please ensure following modules are installed in your python3 envi
 - pandas (v0.24.2)
 - skimage (scikit-image) (v0.16.2)
 - networkx (v2.4)
+- h5py (v2.8.0)
 - mpi4py (optional but recommended; required for run in HPC environment) (v3.0.3)
 
 ### 2. Run
