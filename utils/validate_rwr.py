@@ -2,13 +2,16 @@ import os
 import sys
 import glob
 import pandas as pd
+import pickle
 
 def main(args):
     outdir = args[1]
     input_filenames = glob.glob(f'{outdir}/rwr/*.normalized.rwr.bedpe')
     del_len = len(".normalized.rwr.bedpe")
     line_counts = get_line_counts(input_filenames)
-    linne_counts['chrom'] = line_counts['name'].str.slice(start = 0, end = - del_len)
+    with open(f'{outdir}/linecounts.pkl', 'wb') as ifile:
+        pickle.dump(line_counts, ifile)
+    line_counts['chrom'] = line_counts['name'].str.slice(start = 0, stop = - del_len)
     line_counts['chrom'] = line_counts['chrom'].str.split('.').apply(lambda x: x[-1])
     missing = line_counts.groupby('chrom').apply(get_missing)
     missing = [j for i in missing for j in i]

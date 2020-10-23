@@ -24,7 +24,7 @@ def get_proc_chroms(chrom_lens, rank, n_proc):
 
 def combine_chrom_interactions(directory):
     headers = "\t".join(["chr1", "x1", "x2","chr2","y1","y2","outlier_count",\
-                         "case_avg","control_avg","pvalue","fdr_dist","fdr_chrom"])
+                         "case_avg","control_avg","pvalue", "tstat", "fdr_dist","fdr_chrom"])
     output_filename_temp = os.path.join(directory, "combined_significances.bedpe.temp")
     output_filename = os.path.join(directory, "combined_significances.bedpe")
     input_filepattern = directory + '/significances.*.bedpe'
@@ -182,7 +182,9 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     
     #compute averages over all cells for each point and each local neighborhood
     ##print(local_neighborhood.shape, mat.shape)
-    pvals = stats.ttest_rel(mat, local_neighborhood, axis = 2).pvalue
+    ttest_results = stats.ttest_rel(mat, local_neighborhood, axis = 2)
+    pvals = ttest_results.pvalue
+    tstat = ttest_results.statistic
     ##print(pvals.shape)
     local_neighborhood = np.mean(local_neighborhood, axis = -1)
     mat = np.mean(mat, axis = -1)
@@ -192,19 +194,25 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     local_neighborhood = np.triu(local_neighborhood, 1)
     pvals = np.triu(pvals, 1)
     pvals = np.nan_to_num(pvals, nan = 1)
+    tstat = np.triu(tstat, 1)
+    tstat = np.nan_to_num(tstat, nan = -1000)
     
     #convert matrix to dataframe
     mat = sp.sparse.coo_matrix(mat)
     local_neighborhood = sp.sparse.coo_matrix(local_neighborhood)
     pvals = sp.sparse.coo_matrix(pvals)
+    tstat = sp.sparse.coo_matrix(tstat)
     result_mat = pd.DataFrame({'i': mat.row, 'j': mat.col, 'case_avg': mat.data})
     result_neighb = pd.DataFrame({'i': local_neighborhood.row, \
                                   'j': local_neighborhood.col, \
                                   'control_avg': local_neighborhood.data})
     result_pval = pd.DataFrame({'i': pvals.row, 'j': pvals.col, 'pvalue': pvals.data})
+    result_tstat = pd.DataFrame({'i':tstat.row, 'j': tstat.col, 'tstat': tstat.data})
     result = result_mat.merge(result_neighb, on = ['i', 'j'], how = "outer")
     result = result.merge(result_pval, on = ['i','j'], how = "outer")
+    result = result.merge(result_tstat, on = ['i','j'], how = "outer")
     result.loc[:,'pvalue'] = result['pvalue'].fillna(0)
+    result.loc[:,'tstat'] = result['tstat'].fillna(-1000)
     result.loc[:,'i'] += (start_index)# + upper_limit)
     result.loc[:,'j'] += (start_index)# + upper_limit)
     result.loc[:,'i'] = result['i'].astype(int)

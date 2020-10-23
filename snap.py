@@ -175,7 +175,7 @@ def main():
                         candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
                         dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
                         n_proc = n_proc, max_mem = args.max_memory, \
-                        case_to_control_diff_threshold = args.case_control_diff, \
+                        tstat_threshold = args.tstat_threshold, \
                         circle_threshold_mult = args.circle_threshold_multiplier, \
                         donut_threshold_mult = args.donut_threshold_multiplier, \
                         lower_left_threshold_mult = args.lower_left_threshold_multiplier, \
@@ -191,7 +191,7 @@ def main():
                         candidate_upper_thresh = args.candidate_upper_distance, binsize = args.binsize, \
                         dist = args.dist, clustering_gap = args.clustering_gap, rank = rank, \
                         n_proc = n_proc, max_mem = args.max_memory, \
-                        case_to_control_diff_threshold = args.case_control_diff, \
+                        tstat_threshold = args.tstat_threshold, \
                         circle_threshold_mult = args.circle_threshold_multiplier, \
                         donut_threshold_mult = args.donut_threshold_multiplier, \
                         lower_left_threshold_mult = args.lower_left_threshold_multiplier, \
@@ -204,7 +204,7 @@ def main():
             params = [(interaction_dir, postproc_dir, chrom_dict, args.fdr_threshold, args.postproc_gap_large, \
                         args.postproc_gap_small, args.candidate_lower_distance, \
                         args.candidate_upper_distance, args.binsize, args.dist, args.clustering_gap, \
-                        i, n_proc, args.max_memory, args.case_control_diff, \
+                        i, n_proc, args.max_memory, args.tstat_threshold, \
                         args.circle_threshold_multiplier, args.donut_threshold_multiplier, \
                         args.lower_left_threshold_multiplier, args.horizontal_threshold_multiplier, \
                         args.vertical_threshold_multiplier, args.outlier_threshold_multiplier, \
@@ -297,7 +297,7 @@ def create_parser():
                         required = False, default = 0, type = int)
     parser.add_argument('--outlier', required = False, default = 1.96, type = float, \
                         help = 'zscore threshold for finding outliers.')
-    parser.add_argument('--case-control-diff', default = 0.4, type = float, required = False,
+    parser.add_argument('--tstat-threshold', default = 3, type = float, required = False,
                         help = 'difference threshold for case mean to control mean for finding candidates')
     parser.add_argument('--local-lower-limit', default = 2, type = int, required = False, \
                         help = 'number of bins around center (in each direction) to exlude from neighborhood')
