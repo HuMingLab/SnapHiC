@@ -40,8 +40,10 @@ def determine_dense_matrix_size(num_cells, dist, binsize, max_mem):
     max_mem_floats /= 8
     square_cells = max_mem_floats // num_cells
     mat_size = int(np.floor(np.sqrt(square_cells)) / 4)
-    if mat_size < (dist // binsize):
-        raise "Specified " + str(max_mem) + "GB is not enough for constructing dense matrix with distance " + str(dist) + "."
+    mat_size = max(int((dist // binsize) + 50), mat_size)
+    print('mat_size:', mat_size)
+    #if mat_size < (dist // binsize):
+    #    raise "Specified " + str(max_mem) + "GB is not enough for constructing dense matrix with distance " + str(dist) + "."
     return mat_size
 
 def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_limit, num_cells, chrom_size, chrom_filename):
@@ -60,6 +62,13 @@ def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_l
         #skiprows = all_rows.difference(keeprows)
         hdf_file = h5py.File(chrom_filename + '.cells.hdf', 'r')
         portion = hdf_file[list(hdf_file.keys())[0]]
+        #print(type(keeprows))
+        #if isinstance(keeprows, list):
+        #    print(len(keeprows))
+        #    if len(keeprows) > 0:
+        #        print(keeprows[0], type(keeprows[0]))
+        if len(keeprows) == 0:
+            continue
         portion = portion[keeprows, :]
         hdf_file.close()
         if portion.shape[0] == 0:
