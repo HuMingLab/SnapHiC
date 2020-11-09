@@ -126,7 +126,8 @@ def main():
                 pool.starmap(combine_cells, params)
         logger.write('Per chromosome combine step is completed. Next we will generate one file containing all chromosomes')
         if rank == 0:
-            combine_chrom_hic(directory = hic_dir)
+            combine_chrom_hic(directory = hic_dir, no_cool = args.no_cool, no_hic = args.no_hic, \
+                              genome = args.genome, chrom_sizes_filename = args.chr_lens, binsize = args.binsize)
         logger.write('Combine step is completed')
         logger.flush()
         #print("combined") 
@@ -325,7 +326,7 @@ def create_parser():
                         help = 'multiplier for vertical filter threshold used in finding candidates')
     parser.add_argument('--outlier-threshold-multiplier', default = 0.1, type = float, required = False, \
                         help = 'multiplier for number of outlier cells for threshold used in finding candidates')
-    parser.add_argument('--summit-gap', default = -1, type = int, required = False,
+    parser.add_argument('--summit-gap', default = 2e4, type = int, required = False,
                         help = 'disallowed distance between summit points of a cluster')
     parser.add_argument('--filter-file', default = None, required = False, \
                         help = "bed file of regions to be filtered. Regions should be binned")
@@ -338,6 +339,10 @@ def create_parser():
     parser.add_argument('--steps', nargs = "*", default = ['bin','rwr','hic','interaction','postprocess'], \
                         required = False, help = 'steps to run. Combination of bin,rwr,hic,interaction, and ' +\
                         'postprocess are accepted (no comma, space separated). Default is all steps.')
+    parser.add_argument('--no-hic', action = 'store_true', default = False, \
+                        help = 'if set, will skip generation of .hic file.', required = False)
+    parser.add_argument('--no-cool', action = 'store_true', default = False, \
+                        help = 'if set, will skip generation of .mcool file.', required = False)
     return parser
     
 

@@ -8,6 +8,7 @@ import numpy as np
 import re
 import sys
 import h5py
+import cooler
 
 def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold, logger, rank):
     input_filepattern = indir + '/*' + chrom + '.normalized.rwr.bedpe'
@@ -137,9 +138,16 @@ def combine_cells(indir, outdir, outlier_threshold, chrom_lens, rank, n_proc, lo
         combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold, logger, rank)
         logger.write(f'\tprocessor {rank}: chromosome {chrom} is combined', verbose_level = 1, allow_all_ranks = True)
         
-def combine_chrom_hic(directory):
+def combine_chrom_hic(directory, no_cool, no_hic, genome, chrom_sizes_filename, binsize):
     output_filename = os.path.join(directory, "allChr.hic.input")
+    hic_filename = os.path.join(directory, "allChr.hic")
+    cooler_filename = os.path.join(directory, "allChr.mcool")
     input_filepattern = directory + '/*.bedpe.hic.input'
     proc = subprocess.Popen('cat ' + input_filepattern + ' > ' + output_filename, shell = True)
     proc.communicate()
+    if not no_hic:
+        subprocess.check_call(" ".join(["java -jar utils/juicer_tools_1.22.01.jar pre", output_filename, hic_filename, genome]), \
+                              shell = True)
+    if not no_cool:
+        subprocess.check_call(" ".join(["cooler cload pairs --zero-based --assembly", genome, "-c1 2 -p1 3 -c2 6 -p2 7 --field count=9", chrom_sizes_filename + ":" + str(binsize), output_filename, cooler_filename]), shell = True)
         
