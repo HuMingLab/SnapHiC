@@ -142,12 +142,15 @@ def combine_chrom_hic(directory, no_cool, no_hic, genome, chrom_sizes_filename, 
     output_filename = os.path.join(directory, "allChr.hic.input")
     hic_filename = os.path.join(directory, "allChr.hic")
     cooler_filename = os.path.join(directory, "allChr.mcool")
+    chrom_files = glob.glob(directory + '/*.bedpe.hic.input')
     input_filepattern = directory + '/*.bedpe.hic.input'
     proc = subprocess.Popen('cat ' + input_filepattern + ' > ' + output_filename, shell = True)
     proc.communicate()
+    for fname in chrom_files:
+        os.remove(fname)
     if not no_hic:
         subprocess.check_call(" ".join(["java -jar utils/juicer_tools_1.22.01.jar pre", output_filename, hic_filename, genome]), \
                               shell = True)
     if not no_cool:
-        subprocess.check_call(" ".join(["cooler cload pairs --zero-based --assembly", genome, "-c1 2 -p1 3 -c2 6 -p2 7 --field count=9", chrom_sizes_filename + ":" + str(binsize), output_filename, cooler_filename]), shell = True)
-        
+        subprocess.check_call(" ".join(["cooler cload pairs --zero-based --assembly", genome, "-c1 2 -p1 3 -c2 6 -p2 7 --field count=9", chrom_sizes_filename + ":" + str(int(binsize)), output_filename, cooler_filename]), shell = True)
+
