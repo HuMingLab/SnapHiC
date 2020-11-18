@@ -73,7 +73,8 @@ def main():
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
                             normalize = True, n_proc = n_proc, rank = rank, genome = args.genome, \
                             filter_file = None, parallel = False, rwr_logfile = rwr_logfile, \
-                            rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger)
+                            rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger, \
+                            keep_rwr_matrix = args.keep_rwr_matrix)
             rwr_logfile.close()
         elif parallel_mode == 'parallel':
             parallel_properties['comm'].Barrier()
@@ -85,7 +86,8 @@ def main():
                             alpha = args.alpha, dist = args.dist, chrom_lens = chrom_dict, \
                             normalize = True, n_proc = n_proc, rank = rank, genome = args.genome, \
                             filter_file = None, parallel = True, rwr_logfile = rwr_logfile, \
-                            rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger)
+                            rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger, \
+                            keep_rwr_matrix = args.keep_rwr_matrix)
             #print(rank, 'waiting for other processes')
             rwr_logfile.Close()
             parallel_properties['comm'].Barrier()
@@ -97,7 +99,7 @@ def main():
             threaded_lock = m.Lock()
             params = [(bin_dir, rwr_dir, args.binsize, args.alpha, args.dist, chrom_dict, \
                       True, n_proc, i, args.genome, None, False, rwr_logfile, \
-                      rwr_logfilename, threaded_lock, logger) for i in range(n_proc)]
+                      rwr_logfilename, threaded_lock, logger, args.keep_rwr_matrix) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
                 pool.starmap(get_rwr_for_all, params)
             #rwr_logfile.close()
@@ -343,6 +345,8 @@ def create_parser():
                         help = 'if set, will skip generation of .hic file.', required = False)
     parser.add_argument('--no-cool', action = 'store_true', default = False, \
                         help = 'if set, will skip generation of .mcool file.', required = False)
+    parser.add_argument('--keep-rwr-matrix', action = 'store_true', default = False, \
+                        help = 'if set, will store the computed rwr matrix in entirety in npy format.', required = False)
     return parser
     
 

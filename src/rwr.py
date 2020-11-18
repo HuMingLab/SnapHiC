@@ -331,7 +331,8 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
 
 def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, 
                 normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None, parallel = False, 
-                                rwr_logfile = None, rwr_logfilename = None, threaded_lock = None, logger = None):
+                                rwr_logfile = None, rwr_logfilename = None, threaded_lock = None, logger = None,
+                                 keep_rwr_matrix = False):
     if logger:
         logger.set_rank(rank)
     if not outdir:
@@ -396,7 +397,8 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
             output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "npy"]))
             #df.sort_values(['x1', 'y1'], inplace = True)
             #df.to_csv(output_filename, sep = "\t", header = None, index = False)
-            np.save(output_filename, d)
+            if keep_rwr_matrix:
+                np.save(output_filename, d)
             logger.write(f'\tprocessor {rank}: RWR solved for {setname} {chrom}. Going to normalize if requested', \
                               append_time = False, allow_all_ranks = True, verbose_level = 3)
             if normalize:
