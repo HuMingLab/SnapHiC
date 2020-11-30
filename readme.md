@@ -37,17 +37,17 @@ We strongly recommend using an HPC environmet where you can request nodes/proces
 4. Execute the run file with modified variables (or submit it to the job scheduler). 
 
 ### 4. The Output: 
-The final detected significant interactions are stored in the file: *<outdir>/postprocessed/combined.postprocessed.summits.bedpe*. This tab-separated file includes the following columns: 
-chr1, x1, x2, chr2, y1, y2: start and end position of interacting pair of regions. 
-outlier_count: number of cells with > 1.96 normalized rwr score  
-pvalue, tstat, fdr_dist: statistical measures computed for each binpair 
-case_avg, control_avg: average over cells signal of each binpair (case) and average signal of its negihboring region (control). 
-circle, donut, horizontal, vertical, lower_left: extra filters computed for each binpair. See the manuscript for more details. 
-i, j, min_dist, ro, rownum, delta, ref_neighbor, eta, rank, transformed_rank, transformed_eta: extra columns used in computation of the interaction clusters. 
-eta_cluster: cluster number (ID), IDs are chromosome specific. 
-cluster_size: number of interacting binpairs within a cluster. 
-neg_log10_fdr: measure of the strength of the cluster.  This number is the same for all binpairs within a cluster. We recommend using *fdr_dist* as a measure of strength of the interaction as opposed to this column. 
-summit: all binpairs in the summits file have a value of 1. Note that there might be multiple summits per cluster. 
+The final detected significant interactions are stored in the file: *<outdir>/postprocessed/combined.postprocessed.summits.bedpe*. This tab-separated file includes the following columns:  
+- chr1, x1, x2, chr2, y1, y2: start and end position of interacting pair of regions. 
+- outlier_count: number of cells with > 1.96 normalized rwr score  
+- pvalue, tstat, fdr_dist: statistical measures computed for each binpair 
+- case_avg, control_avg: average over cells signal of each binpair (case) and average signal of its negihboring region (control). 
+- circle, donut, horizontal, vertical, lower_left: extra filters computed for each binpair. See the manuscript for more details. 
+- i, j, min_dist, ro, rownum, delta, ref_neighbor, eta, rank, transformed_rank, transformed_eta: extra columns used in computation of the interaction clusters. 
+- eta_cluster: cluster number (ID), IDs are chromosome specific. 
+- cluster_size: number of interacting binpairs within a cluster. 
+- neg_log10_fdr: measure of the strength of the cluster.  This number is the same for all binpairs within a cluster. We recommend using *fdr_dist* as a measure of strength of the interaction as opposed to this column. 
+- summit: all binpairs in the summits file have a value of 1. Note that there might be multiple summits per cluster. 
 
 In addition to the final output file metioned above, there are multiple other intermediate output files. Each of the steps in the process (bin, rwr, hic, interaction, postprocess) creates a separate subdirectory in the *<outdir>*. The first two steps generate output files per cell, and per cell-chromosome respectively. The remaining steps use the combined data and generate one file per chromosome. 
 
