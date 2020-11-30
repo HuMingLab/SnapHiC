@@ -155,7 +155,6 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
         hic_chrom_filename = os.path.join(indir, "..", "hic", ".".join([chrom, "normalized", "combined", "bedpe"]))
         with h5py.File(hic_chrom_filename + ".cells.hdf", 'r') as ifile:
             num_cells = ifile[chrom].shape[1]
-        #num_cells = 39
         infile = os.path.join(indir, ".".join(["significances", chrom, "bedpe"]))
         d = pd.read_csv(infile, sep = "\t")
         candidates = d[(d['y1'] - d['x1'] <= candidate_upper_thresh) & \
@@ -461,6 +460,16 @@ def cluster_candidates(outdir, proc_chroms, clustering_gap, binsize, summit_gap,
         if candidates.shape[0] > 1:
             candidates['i'] = (candidates['x1'] //binsize).astype(int)
             candidates['j'] = (candidates['y1'] //binsize).astype(int)
+            points = candidates[['i', 'j']].to_numpy()
+            dists = sp.spatial.distance.cdist(points, points, 'euclidean')
+            np.fill_diagonal(dists, float('inf'))
+            candidates['min_dist'] = np.apply_along_axis(lambda x: min(x), axis = 0, arr = dists)
+            candidates = candidates[candidates['min_dist'] <= np.sqrt(8)]
+            candidates.reset_index(drop = True, inplace = True)
+            if candidates.shape[0] == 0:
+                continue
+            #print(chrom, candidates.shape)
+
             points = candidates[['i', 'j']].to_numpy()
             dists = sp.spatial.distance.cdist(points, points, 'euclidean')
             counts = np.apply_along_axis(lambda x: len(np.where(x <= np.sqrt(2 * (clustering_gap ** 2)))[0]), axis = 0, arr = dists)

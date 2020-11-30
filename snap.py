@@ -227,6 +227,7 @@ def parse_chrom_lengths(chrom, chrom_lens_filename, genome):
         if not chrom_count:
             raise("Genome name is not recognized")
         chrom = ['chr' + str(i) for i in range(1, chrom_count + 1)]
+        #chrom = ["chr1", "chr2", "chr5", "chr16"]
     else:
         chrom = [chrom]
     with open(chrom_lens_filename) as infile:
@@ -285,7 +286,7 @@ def create_parser():
     parser.add_argument('--chrom', action = 'store', help = 'chromosome to process', \
                         required = False, default = None)
     parser.add_argument('--dist', type = int, help = 'distance from diagonal to consider', \
-                        default = 1e6, required = False)
+                        default = 2e6, required = False)
     parser.add_argument('--binsize', type = int, help = 'bin size used for binning the reads', \
                         required = False, default = 1e4)
     parser.add_argument('--low-cutoff', type = int, help = 'cut-off for removing short-range reads', \
@@ -314,7 +315,7 @@ def create_parser():
                        help = 'number of bins around peaks to disregard in postprocessing')
     parser.add_argument('--candidate-lower-distance', default = 100000, type = int, required = False, \
                        help = 'lower threshold for distance between candidate peak binpairs')
-    parser.add_argument('--candidate-upper-distance', default = 900000, type = int, required = False, \
+    parser.add_argument('--candidate-upper-distance', default = 2e6, type = int, required = False, \
                        help = 'upper threshold for distance between candidate peak binpairs')
     parser.add_argument('--circle-threshold-multiplier', default = 1.33, type = float, required = False, \
                         help = 'multiplier for circle filter threshold used in finding candidates')

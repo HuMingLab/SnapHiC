@@ -40,8 +40,9 @@ def determine_dense_matrix_size(num_cells, dist, binsize, max_mem):
     max_mem_floats /= 8
     square_cells = max_mem_floats // num_cells
     mat_size = int(np.floor(np.sqrt(square_cells)) / 4)
+    #print(mat_size)
     mat_size = max(int((dist // binsize) + 50), mat_size)
-    print('mat_size:', mat_size)
+    #print('mat_size:', mat_size)
     #if mat_size < (dist // binsize):
     #    raise "Specified " + str(max_mem) + "GB is not enough for constructing dense matrix with distance " + str(dist) + "."
     return mat_size

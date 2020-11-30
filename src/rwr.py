@@ -305,7 +305,7 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
     with open(output_filename, "a") as f:
         for offset in range(1, max_bin_distance + 1):
             r, c = get_nth_diag_indices(d, offset)
-            vals_orig = d[r,c].tolist()
+            vals_orig = d[r,c].tolist()[0]
 
             vals = vals_orig.copy()
             vals.sort()
@@ -315,7 +315,17 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
             remaining = vals[(trim_index):]
             mu = np.mean(remaining)
             sd = np.std(remaining)
+            #print('musd')
+            #print(mu, sd)
+            #vals_orig = vals_orig[0][:]
+            #print(vals_orig[:5])
             vals_orig = (np.array(vals_orig) - mu) / sd
+            if sd < 1e-6:
+                vals_orig = [0] * len(vals_orig)
+                #print(len(vals_orig))
+            #print(offset,mu,sd,max(vals_orig))
+            #print(vals_orig[:5])
+            #print(r.shape, c.shape, vals_orig.shape)
             df = pd.DataFrame({'x1': r, 'y1': c, 'v': vals_orig})
             df['x1'] = ((df['x1'] + remove_bins) * binsize).astype(int)
             df['y1'] = ((df['y1'] + remove_bins) * binsize).astype(int)
@@ -328,6 +338,18 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
         #df_all = pd.concat([df_all, df], axis = 0)
     #df_all = df_all.sort_values(['x1', 'y1'])
     #df_all.to_csv(output_filename, header = False, sep = "\t", index = False)
+
+def keep_eligible_distance(d, dist, binsize):
+    irange = d.shape[0]
+    jrange = int(dist // binsize)
+    inds = [i for i in range(irange) for j in range(i, i+jrange)]
+    indps = [j for i in range(irange) for j in range(i+1, i+1+jrange)]
+    keep_matrix = sp.sparse.csr_matrix(([1 for i in range(len(inds))], (inds, indps)))
+    keep_matrix = keep_matrix[:,:d.shape[1]]
+    #print(keep_matrix[0, 198:208])
+    d = keep_matrix.multiply(sp.sparse.csr_matrix(d))
+    #print(d[0, 198:208])
+    return d
 
 def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, 
                 normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None, parallel = False, 
@@ -394,17 +416,24 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
                 #print('written to file',chrom, setname, "from", rank)
                 #sys.stdout.flush()
                 continue
-            output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr", "npy"]))
+            output_filename = os.path.join(outdir, ".".join([setname, chrom, "rwr"]))
             #df.sort_values(['x1', 'y1'], inplace = True)
             #df.to_csv(output_filename, sep = "\t", header = None, index = False)
+            buffer_size  = 50000
             if keep_rwr_matrix:
-                np.save(output_filename, d)
+                #print('before', d.shape)
+                d = keep_eligible_distance(d, dist + buffer_size, binsize)
+                #print(type(d))
+                #print('after', d.shape)
+                sp.sparse.save_npz(output_filename, d)
+                #np.save(output_filename, d)
             logger.write(f'\tprocessor {rank}: RWR solved for {setname} {chrom}. Going to normalize if requested', \
                               append_time = False, allow_all_ranks = True, verbose_level = 3)
             if normalize:
-                max_bin_distance = int(dist // binsize)
-                remove_bins = int(50000 // binsize)
+                max_bin_distance = int((dist + buffer_size) // binsize)
+                remove_bins = int(buffer_size // binsize)
                 #print(remove_bins, type(remove_bins))
+                #d = sp.sparse.load_npz(output_filename + ".npz")
                 d = d[remove_bins:-remove_bins, remove_bins:-remove_bins]
                 #df = df[(df['x1'] >= 50000) & (df['y1'] <= last_bin * binsize - 50000)]
                 output_filename = os.path.join(outdir, ".".join([setname, chrom, "normalized", "rwr", "bedpe"]))
