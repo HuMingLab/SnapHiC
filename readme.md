@@ -51,31 +51,11 @@ The final detected significant interactions are stored in the file: *<outdir>/po
 
 In addition to the final output file metioned above, there are multiple other intermediate output files. Each of the steps in the process (bin, rwr, hic, interaction, postprocess) creates a separate subdirectory in the *<outdir>*. The first two steps generate output files per cell, and per cell-chromosome respectively. The remaining steps use the combined data and generate one file per chromosome. 
 
-
-#### Details on running:  
-In brief, you will need to run the program in the following two steps. These are the already included in the run-files, and by executing them as described above or by submitting to the job-scheduler you are essentially following these steps:   
-step1:  
-```
-python3 snap.py -i <input-directory> -o <output-directory> -c <column-numbers-for-chromosomes-in-data> -p <column-numbers-for-read-positions-in-data> -l <chromosome-lengths-file> -g <genome: one-of-hg/mm> [--parallel] --steps "bin rwr"
-```
-followed by step2:  
-```
-python3 snap.py -i <input-directory> -o <output-directory> -l <chromosome-lengths-file> -g <genome: one-of-hg/mm> [--parallel] --steps "hic interaction postprocess"
-```
-
-The operation in this pipeline is divided into 5 steps: (1) binning, (2) RWR computation, (3) combining cells, (4) computation of local backgroud, (5) finalizing and postprocessing. You can specify which steps you want to run as a command line argument. To specify the steps use the argumet `--step` followed by any of the 'bin', 'rwr', 'hic', 'interaction', and 'postprocess'. (if you don''t enter any steps, it will attempt to run the entire pipeline).  
-We strongly recommend breaking the operation down into two parts: the first part is the binning and RWR computation and the second part includes all the remaining steps. 
-This breakdown is recommended for two reasons. First, when you have a large number of cells to process, you would want to run the operation in parallel as much as possible, increasing the number of processors per node; but the available memory is limited and your run might fail due to out of memory error (which the program is not capable of catching). By waiting until the RWR step is completed you can make sure all the cells and chromosomes are processed. **If you restart this rwr step, it will recognize the chromosomes/cells that have already been processed and won''t repeat the computation for them.** In case you run out of memory and you suspect some of the RWR computations might be corrupted, we have included a script (utils/validate_rwr.py) that can be used to validate that all RWRs are computed successfully. 
-Second, for steps 3 and 4 you will need more memory per CPU, as such if your dataset contains more than 100 cells, we recommend using 1, 2, or 3 processors per node for a node with ~120GB memory. By breaking the operation down into these two steps, you can optimally adjust your memory and processor per node according to your HPC and the number of cells in your dataset.  
-
-Additional arguments that can be used, can be seen by calling *python snap.py --help*.
-
-
-### 3. Testing  
+### 5. Testing  
 You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) to test your installation of the program. This dataset contains a subset of 100 cells from the Ecker''s ODC data (hg19). The output for this set can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC). 
 After downloading the input file, untar it so that you can see the 100 input data files. Run files that we have used to generate these results are also included with the snapHiC package in *run_test_odc_step1.sh* and *run_test_odc_step2.sh* scripts. Set the input/output directories and submit them for run.
 
-### 4. Recommendations for parallel setting:  
+### 6. Recommendations for parallel setting:  
 As mentioned earlier, you would want to use as many processors as possible for the RWR step (first script), but you want to provide enough memory for the rest of the steps.  
 The specific size of memory and processors per node will be different based on the genome being used and the number of cells in the dataset. Here are the setting we have used for our datasets.  
 | genome | #cells | binsize | run step | nodes | processors per node | memory per node | runtime |  
@@ -85,3 +65,20 @@ The specific size of memory and processors per node will be different based on t
 | mm10 | 100 | 10,000 | 1 (bin rwr) | 10 | 3 | 120GB | -- hrs |  
 | mm10 | 100 | 10,000 | 2 (hic inter. postproc.) | 10 | 2 | 120GB | -- hrs |
 
+### 7. More Details on running:
+In brief, you will need to run the program in the following two steps. These are the already included in the run-files, and by executing them as described above or by submitting to the job-scheduler you are essentially following these steps:
+step1:
+```
+python3 snap.py -i <input-directory> -o <output-directory> -c <column-numbers-for-chromosomes-in-data> -p <column-numbers-for-read-positions-in-data> -l <chromosome-lengths-file> -g <genome: one-of-hg/mm> [--parallel] --steps "bin rwr"
+```
+followed by step2:
+```
+python3 snap.py -i <input-directory> -o <output-directory> -l <chromosome-lengths-file> -g <genome: one-of-hg/mm> [--parallel] --steps "hic interaction postprocess"
+```
+
+The operation in this pipeline is divided into 5 steps: (1) binning, (2) RWR computation, (3) combining cells, (4) computation of local backgroud, (5) finalizing and postprocessing. You can specify which steps you want to run as a command line argument. To specify the steps use the argumet `--step` followed by any of the 'bin', 'rwr', 'hic', 'interaction', and 'postprocess'. (if you don''t enter any steps, it will attempt to run the entire pipeline). 
+We strongly recommend breaking the operation down into two parts: the first part is the binning and RWR computation and the second part includes all the remaining steps. 
+This breakdown is recommended for two reasons. First, when you have a large number of cells to process, you would want to run the operation in parallel as much as possible, increasing the number of processors per node; but the available memory is limited and your run might fail due to out of memory error (which the program is not capable of catching). By waiting until the RWR step is completed you can make sure all the cells and chromosomes are processed. **If you restart this rwr step, it will recognize the chromosomes/cells that have already been processed and won''t repeat the computation for them.** In case you run out of memory and you suspect some of the RWR computations might be corrupted, we have included a script (utils/validate_rwr.py) that can be used to validate that all RWRs are computed successfully. 
+Second, for steps 3 and 4 you will need more memory per CPU, as such if your dataset contains more than 100 cells, we recommend using 1, 2, or 3 processors per node for a node with ~120GB memory. By breaking the operation down into these two steps, you can optimally adjust your memory and processor per node according to your HPC and the number of cells in your dataset.  
+
+Additional arguments that can be used, can be seen by calling *python snap.py --help*.
