@@ -14,9 +14,8 @@ pip install -r requirements.txt
 3. Optionally a binned bed-file of filter regions for the genome (aka blacklist regions). Filter regions and low mappability regions for hg19 and mm10 in 10KB resolution are included in the `ext` directory. 
 
 ### 3. Run
-#### How to run:
 We strongly recommend using an HPC environmet where you can request nodes/processors and dedicated memory. However runfiles for multi-threaded runs and single-processor systems are also provided.
-1. Put all the mapped read files in one directory. For each read pair your file should have at least 2 columns for chromsomes and 2 columns for the mapped position (bp).  
+1. Put all the mapped read files in one directory; one file per cell, each file containing one line per read-pair. For each read pair your file should have at least 2 columns for chromsomes and 2 columns for the mapped position (bp).  
 2. Either one of the following options will work but the HPC cluster is the recommended method:  
 &Tab;**(I) For HPC clusters with a job scheduler such as PBS or SLURM**:  
 &Tab;&Tab; Use the template provided for the PBS scheduler: *run_hpc1.sh*, followed by *run_hpc2.sh*. Set the variables in these files based on the point (3) below. (These files use the --parallel flag)  
