@@ -22,8 +22,7 @@ chrs="2 4"
 pos="3 5"
 chrlen="ext/hg19.chrom.sizes"
 genome="hg19"
-fdr_thresh=0.01
 filter_file="ext/hg19_filter_regions.txt"
 steps="hic interaction postprocess"
 
-mpirun -np 10 python ./snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --fdr-threshold $fdr_thresh --filter-file $filter_file --steps $steps --parallel
+mpirun -np 10 python ./snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --parallel
