@@ -9,7 +9,7 @@ pip install -r requirements.txt
 ```
 
 ### 2. Required Input Files:
-1. A "tab-separated" or "tab-separated and zipped" file per cell, of the reads mapped on the genome. 
+1. A "tab-separated" or "tab-separated and gzipped" file per cell, of the reads mapped on the genome. (you can generate these files by running for example bwa on your reads fastq files).
 2. chrom.sizes file for the genome of interest. (can be downloaded from [here](https://hgdownload.soe.ucsc.edu/downloads.html)). Files for mm10 and hg19 are included in the `ext` directory. 
 3. Optionally a binned bed-file of filter regions for the genome (aka blacklist regions). Filter regions and low mappability regions for hg19 and mm10 in 10KB resolution are included in the `ext` directory. 
 
