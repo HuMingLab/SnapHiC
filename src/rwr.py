@@ -305,7 +305,10 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
     with open(output_filename, "a") as f:
         for offset in range(1, max_bin_distance + 1):
             r, c = get_nth_diag_indices(d, offset)
-            vals_orig = d[r,c].tolist()[0]
+            vals_orig = d[r,c].tolist()
+            #print(type(vals_orig))
+            #print(len(vals_orig))
+            #vals_orig = vals_orig[0]
 
             vals = vals_orig.copy()
             vals.sort()
@@ -315,10 +318,10 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
             remaining = vals[(trim_index):]
             mu = np.mean(remaining)
             sd = np.std(remaining)
+            #print(vals_orig[:5])
             #print('musd')
             #print(mu, sd)
             #vals_orig = vals_orig[0][:]
-            #print(vals_orig[:5])
             vals_orig = (np.array(vals_orig) - mu) / sd
             if sd < 1e-6:
                 vals_orig = [0] * len(vals_orig)
