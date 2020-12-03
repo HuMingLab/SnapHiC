@@ -208,7 +208,7 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, ignore_sets = 
     filenames = [name for name in filenames if name.endswith(".bedpe")]
     filenames.sort()
     #print(filenames)
-    setnames = [re.search(r".*\.", fname).group()[:-1] for fname in filenames]
+    setnames = [os.path.basename(fname)[:-len(".bedpe")] for fname in filenames]
     chrom_list = [(k, chrom_lens[k]) for k in list(chrom_lens.keys())]
     chrom_list.sort(key = lambda x: x[1])
     chrom_list.reverse()
@@ -239,11 +239,14 @@ def determine_proc_share(indir, chrom_lens, n_proc, rank, outdir, ignore_sets = 
         #print(completed_setnames[0])
         completed_pairs = set([(setname[:setname.rfind('.')], setname[(setname.rfind('.') + 1):]) for setname in completed_setnames])
         #print(len(completed_pairs), 'example completed', list(completed_pairs)[0] if len(completed_pairs) > 0 else "0")
-        #print('jobs vs complted', len(jobs), len(completed_pairs))
-        #print(completed_pairs[:2])
-        #print(jobs[:2])
+        if False and rank == 0:
+            print('jobs vs complted', len(jobs), len(completed_pairs))
+            #print(completed_pairs[:2])
+            print(jobs[0])
+            print(list(completed_pairs)[0])
         jobs = [job for job in jobs if (job[2], job[0]) not in completed_pairs]
-        #print('new jobs len', len(jobs))
+        if False and rank == 0:
+            print('new jobs len', len(jobs))
     jobs.sort()
     indices = list(range(rank, len(jobs), n_proc))
     #random.seed(4)
@@ -306,7 +309,11 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
         for offset in range(1, max_bin_distance + 1):
             r, c = get_nth_diag_indices(d, offset)
             vals_orig = d[r,c].tolist()
+
+            if isinstance(vals_orig[0], list):
+                vals_orig = vals_orig[0]
             #print(type(vals_orig))
+            #print(type(vals_orig[0]))
             #print(len(vals_orig))
             #vals_orig = vals_orig[0]
 
