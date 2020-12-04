@@ -60,14 +60,14 @@ The specific size of memory and processors per node will be different based on t
 | genome | #cells | binsize | distance | run step | nodes | processors per node | memory per node | runtime |  
 | --- | --- | --- | --- | --- | --- | --- | --- |  
 | mm10 | 100 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 2.4 hrs |  
-| mm10 | 100 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 0.7 hrs |
-| mm10 | 200 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 8.8 hrs |
-| mm10 | 200 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 1.3 hrs |
-| mm10 | 300 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 13.2 hrs |
-| mm10 | 300 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 1.8 hrs |
-| mm10 | 400 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 18.4 hrs |
-| mm10 | 400 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 2.4 hrs |
-
+| mm10 | 100 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 0.7 hrs | 
+| mm10 | 200 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 8.8 hrs | 
+| mm10 | 200 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 1.3 hrs | 
+| mm10 | 300 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 13.2 hrs | 
+| mm10 | 300 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 1.8 hrs | 
+| mm10 | 400 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 18.4 hrs | 
+| mm10 | 400 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 2.4 hrs | 
+ 
 ### 7. More Details on running:
 In brief, you will need to run the program in the following two steps. These are the already included in the run-files, and by executing them as described above or by submitting to the job-scheduler you are essentially following these steps:
 step1:
