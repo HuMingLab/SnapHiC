@@ -51,7 +51,7 @@ The final detected significant interactions are stored in the file: *<outdir>/po
 In addition to the final output file metioned above, there are multiple other intermediate output files. Each of the steps in the process (bin, rwr, hic, interaction, postprocess) creates a separate subdirectory in the *<outdir>*. The first two steps generate output files per cell, and per cell-chromosome respectively. The remaining steps use the combined data and generate one file per chromosome. 
 
 ### 5. Testing  
-You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) to test your installation of the program. This dataset contains a subset of 100 cells from the Ecker''s ODC data (hg19). The output for this set can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC). 
+You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) to test your installation of the program. This dataset contains a subset of 100 cells from the Ecker''s ODC data (hg19). The output for this set can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100_output.tar). 
 After downloading the input file, untar it so that you can see the 100 input data files. Run files that we have used to generate these results are also included with the snapHiC package in *run_test_odc_step1.sh* and *run_test_odc_step2.sh* scripts. Set the input/output directories and submit them for run.
 
 ### 6. Recommendations for parallel setting:  
