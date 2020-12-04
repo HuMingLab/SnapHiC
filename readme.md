@@ -57,12 +57,16 @@ After downloading the input file, untar it so that you can see the 100 input dat
 ### 6. Recommendations for parallel setting:  
 As mentioned earlier, you would want to use as many processors as possible for the RWR step (first script), but you want to provide enough memory for the rest of the steps.  
 The specific size of memory and processors per node will be different based on the genome being used and the number of cells in the dataset. Here are the setting we have used for our datasets.  
-| genome | #cells | binsize | run step | nodes | processors per node | memory per node | runtime |  
+| genome | #cells | binsize | distance | run step | nodes | processors per node | memory per node | runtime |  
 | --- | --- | --- | --- | --- | --- | --- | --- |  
-| hg19 | 100 | 10,000 | 1 (bin rwr) | 15 | 2 | 120GB | 7.5 hrs |  
-| hg19 | 100 | 10,000 | 2 (hic inter. postproc.) | 10 | 1 | 120GB | 1 hr |  
-| mm10 | 100 | 10,000 | 1 (bin rwr) | 10 | 3 | 120GB | -- hrs |  
-| mm10 | 100 | 10,000 | 2 (hic inter. postproc.) | 10 | 2 | 120GB | -- hrs |
+| mm10 | 100 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 2.4 hrs |  
+| mm10 | 100 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 0.7 hrs |
+| mm10 | 200 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 8.8 hrs |
+| mm10 | 200 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 1.3 hrs |
+| mm10 | 300 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 13.2 hrs |
+| mm10 | 300 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 1.8 hrs |
+| mm10 | 400 | 10,000 | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 18.4 hrs |
+| mm10 | 400 | 10,000 | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 2.4 hrs |
 
 ### 7. More Details on running:
 In brief, you will need to run the program in the following two steps. These are the already included in the run-files, and by executing them as described above or by submitting to the job-scheduler you are essentially following these steps:
@@ -81,3 +85,4 @@ This breakdown is recommended for two reasons. First, when you have a large numb
 Second, for steps 3 and 4 you will need more memory per CPU, as such if your dataset contains more than 100 cells, we recommend using 1, 2, or 3 processors per node for a node with ~120GB memory. By breaking the operation down into these two steps, you can optimally adjust your memory and processor per node according to your HPC and the number of cells in your dataset.  
 
 Additional arguments that can be used, can be seen by calling *python snap.py --help*.
+For additional questions, please submit an issue providing the details of your system and run. You can contact us via email <afhuming@gmail.com> (Ming Hu) or <a.abnousi@gmail.com> (Armen Abnousi).
