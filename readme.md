@@ -9,28 +9,28 @@ pip install -r requirements.txt
 ```
 
 ### 2. Required Input Files:
-1. A "tab-separated" or "tab-separated and gzipped" file per cell, of the reads mapped on the genome. (you can generate these files by running for example bwa on your reads fastq files).
+1. A "tab-separated" or "tab-separated and gzipped" file of the reads mapped on the genome for each cell. (You can generate these files by running bwa-mem on your fastq files).
 2. chrom.sizes file for the genome of interest. (can be downloaded from [here](https://hgdownload.soe.ucsc.edu/downloads.html)). Files for mm10 and hg19 are included in the `ext` directory. 
-3. Optionally a binned bed-file of filter regions for the genome (aka blacklist regions). Filter regions and low mappability regions for hg19 and mm10 in 10KB resolution are included in the `ext` directory. 
+3. Optionally a binned bed file of filtered regions for the genome (aka blacklist regions). Filtered regions and low mappability regions for hg19 and mm10 in 10KB resolution are included in the `ext` directory. 
 
 ### 3. Run
-We strongly recommend using an HPC environmet where you can request nodes/processors and dedicated memory. However runfiles for multi-threaded runs and single-processor systems are also provided.
-1. Put all the mapped read files in one directory; one file per cell, each file containing one line per read-pair. For each read pair your file should have at least 2 columns for chromsomes and 2 columns for the mapped position (bp).  
+We strongly recommend using an HPC environmet where you can request nodes/processors and allocate memory. However, runfiles for multi-threaded runs and single-processor systems are also provided.
+1. Put all the mapped read files in one directory: one file for each cell, each file containing one line per read pair. For each read pair, the file should contain at least 2 columns for chromsomes and 2 columns for the mapped positions (bp).  
 2. Either one of the following options will work but the HPC cluster is the recommended method:  
 &Tab;**(I) For HPC clusters with a job scheduler such as PBS or SLURM**:  
 &Tab;&Tab; Use the template provided for the PBS scheduler: *run_hpc1.sh*, followed by *run_hpc2.sh*. Set the variables in these files based on the point (3) below. (These files use the --parallel flag)  
 &Tab;**(II) For a compute node with multiple cores but no scheduler**:  
-&Tab;&Tab; Use the *run_threaded.sh* file as template. Set the variables in this file based on the point (3) below. (This file uses --threaded flag, along with the number of threads you specify to use).  
+&Tab;&Tab; Use the *run_threaded.sh* file as the template. Set the variables in this file based on the point (3) below. (This file uses --threaded flag, along with the number of threads you specify to use).  
 &Tab;**(III) For a single core run non-parallel run**:  
-&Tab;&Tab; This can be extremely slow, it is not recommended to use this mode for large number of cells. Use *run_desktop.sh*.
+&Tab;&Tab; This can be extremely slow. We do not recommended to use this mode for a large number of cells. Use *run_desktop.sh*.
 3. Regardless of which running method you are using, the following variables have to be set in the corresponding run files:  
 &Tab;`indir`="/path/where/the/mapped/data/are/stored"   
-&Tab;`suffix`="contacts.txt" (filename suffix for mapped files. This is used to distinguish input files if there are other files in the input directory)  
+&Tab;`suffix`="contacts.txt" (Filename suffix for mapped files. This is used to distinguish input files if there are other files in the input directory)  
 &Tab;`outdir`="/path/where/the/output/will/be/saved"  
-&Tab;`chrs`="2 4" (two integers indicating column numbers of the chromosomes in the input files. starting from 1).  
-&Tab;`pos`="3 5" (two integers indicating column numbers of the read mapped locations in the input files. starting from 1). 
-&Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download from ucsc webpage if needed).  
-&Tab;`genome`="mm10" (name of the chromosome. Currently accepts mmxx and hgxx). It is used to determine name of the chromosomes to process, as well as to create juicebox''s hic file.   
+&Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the input files. Starting from 1).  
+&Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the input files. Starting from 1). 
+&Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download it from the UCSC webpage if needed).  
+&Tab;`genome`="mm10" (Name of the reference genome. Currently accepts mm10 and hg19). It is used to determine name of the chromosomes to process, as well as to create juicebox''s hic file.   
 &Tab;`filter_file`="ext/mm10_filter_regions.txt" (this is optional. We recommend providing a binned bed file for areas of low mappability or filtered regions of the genome. We have included these files for mm10 and hg19 in the *ext* directory) 
 &Tab;Additionally for the threaded run (single node with no scheduler) you will need to specify *num_proc* - number of threads to use).  
 4. Execute the run file with modified variables (or submit it to the job scheduler). 
