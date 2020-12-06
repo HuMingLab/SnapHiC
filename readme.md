@@ -9,13 +9,13 @@ pip install -r requirements.txt
 ```
 
 ### 2. Required Input Files:
-1. A "tab-separated" or "tab-separated and gzipped" file of the reads mapped on the genome for each cell. (You can generate these files by running bwa-mem on your fastq files).
-2. chrom.sizes file for the genome of interest. (can be downloaded from [here](https://hgdownload.soe.ucsc.edu/downloads.html)). Files for mm10 and hg19 are included in the `ext` directory. 
-3. Optionally a binned bed file of filtered regions for the genome (aka blacklist regions). Filtered regions and low mappability regions for hg19 and mm10 in 10KB resolution are included in the `ext` directory. 
+1. A "tab-separated" or "tab-separated and gzipped" file of the mapped reads for each cell. (You can generate these files by running bwa-mem on your fastq files).
+2. chrom.sizes file for the genome of interest. (It can be downloaded from [here](https://hgdownload.soe.ucsc.edu/downloads.html)). Files for mm10 and hg19 are included in the `ext` directory. 
+3. Optionally, a binned bed file of the filtered regions for the genome (aka the blacklist regions). Filtered regions and low mappability regions for hg19 and mm10 in 10KB resolution are included in the `ext` directory. 
 
 ### 3. Run
-We strongly recommend using an HPC environmet where you can request nodes/processors and allocate memory. However, runfiles for multi-threaded runs and single-processor systems are also provided.
-1. Put all the mapped read files in one directory: one file for each cell, each file containing one line per read pair. For each read pair, the file should contain at least 2 columns for chromsomes and 2 columns for the mapped positions (bp).  
+We strongly recommend using an HPC environment where you can request nodes/processors and allocate memory. However, runfiles for multi-threaded run and single-processor system are also provided.
+1. Put all the mapped read files into one directory: one file for each cell, each file containing one line per read pair. For each read pair, the file should contain at least 2 columns for chromsomes and 2 columns for the mapped positions (bp).  
 2. Either one of the following options will work but the HPC cluster is the recommended method:  
 &Tab;**(I) For HPC clusters with a job scheduler such as PBS or SLURM**:  
 &Tab;&Tab; Use the template provided for the PBS scheduler: *run_hpc1.sh*, followed by *run_hpc2.sh*. Set the variables in these files based on the point (3) below. (These files use the --parallel flag)  
