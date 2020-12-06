@@ -86,4 +86,4 @@ Second, for steps 3 and 4 you will need more memory per CPU, as such if your dat
 
 Additional arguments that can be used, can be seen by calling *python snap.py --help*. 
 
-For additional questions, please submit an issue providing the details of your system and run. You can contact us via email <afhuming@gmail.com> (Ming Hu) or <a.abnousi@gmail.com> (Armen Abnousi).
+For additional questions, please submit an issue providing the details of your system and run. You can contact us via email <hum@ccf.org> (Ming Hu) or <a.abnousi@gmail.com> (Armen Abnousi).
