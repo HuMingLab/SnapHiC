@@ -1,5 +1,5 @@
-# snapHiC: Single Nucleus Analysis Pipeline for HiC Data 
-## Chromatin Interaction Caller For Single Cell HiC Data
+# SnapHiC: Single Nucleus Analysis Pipeline for Hi-C Data 
+## Chromatin Interaction Caller For Single Cell Hi-C Data
 ### 1. Installation 
 1. Install python version >= 3.6 
 2. Make sure MPI (e.g. [open-mpi](https://www.open-mpi.org/)) is installed on your system and is on your path (`which mpicc` should return a path). 
