@@ -18,7 +18,7 @@ pip install -r requirements.txt
 We strongly recommend using an HPC environment where you can request nodes/processors and allocate memory. However, run-files for multi-threaded run and single-processor system are also provided.
 1. Put all the mapped read files, one for each cell, into the same directory. In each file, one line represents one mapped read pair. For each mapped read pair, the file should contain at least 2 columns for chromsomes and 2 columns for the mapped positions (bp).  
 2. Open the *run_step1.sh* and *run_step2.sh* files. If you are using a HPC cluster equipped with a job scheduler such as PBS or SLURM (and we strongly recommend that), modify the first few lines by setting the required nodes, processors, memory, as well as loading the required modules (python3.6+, MPI, and the packages installed using pip as described in the Installation section above). If you are using a regular compute node with no job scheduler, or a desktop computer, you can skip this  step (remember you will still need large amounts of memory and the runtime might be an issue).    
-3. In the *run_step1.sh* and *run_step2.sh* files set the following variables:
+3. In the *run_step1.sh* and *run_step2.sh* files set the following variables:  
 &Tab;`snapHiC_dir`="/path/to/directory/where/snapHiC/is/located/" (path to the directory where snap.py file of the pipeline is located).  
 &Tab;`parallelism`="parallel" (can be one of the **parallel**, **threaded**, or **single-proc**. Use parallel if you are on HPC with job scheduler. Threaded if you have access to multiple processors but no job scheduler, and singl-proc otherwise).    
 &Tab;`number_of_processors`=15 (if you are using mutli-threaded or parallel setting, specify number of processors).  
