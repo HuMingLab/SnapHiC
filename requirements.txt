@@ -6,3 +6,4 @@ scikit-image==0.16.2
 networkx==2.4
 h5py==2.8.0
 mpi4py==3.0.3
+cooler==0.8.10
