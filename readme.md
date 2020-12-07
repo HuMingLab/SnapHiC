@@ -12,7 +12,7 @@ pip install -r requirements.txt
 ### 2. Required input files:
 1. A "tab-separated" or "tab-separated and gzipped" file of the mapped reads for each cell. For example, you can generate these files by running bwa-mem on your fastq files.
 2. chrom.sizes file for the genome of interest, which can be downloaded from [here](https://hgdownload.soe.ucsc.edu/downloads.html). Files for mm10, hg19 and hg38 are included in the `ext` directory. 
-3. Optionally, a binned bed file of the filtered regions for the genome (aka the blacklist regions). Filtered regions and low mappability regions for mm10, hg19 and hg38 in 10KB resolution with MboI restriction enzyme are included in the `ext` directory. 
+3. A binned bed file of the filtered regions for the genome (the blacklist regions). Filtered regions and low mappability regions for mm10, hg19 and hg38 in 10KB resolution with the restriction enzyme MboI are included in the `ext` directory. 
 
 ### 3. Run
 We strongly recommend using an HPC environment where you can request nodes/processors and allocate memory. However, run-files for multi-threaded run and single-processor system are also provided.
