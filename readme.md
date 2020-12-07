@@ -1,4 +1,4 @@
-# SnapHiC: Single Nucleus Analysis Pipeline for Hi-C Data 
+# SnapHiC: Single Nucleus Analysis Pipeline for Hi-C Data (Latest updates: December 7th, 2020)
 ## Identifying chomatin loops from single cell Hi-C data
 ### 1. Installation
 You can download the singularity image of SnapHiC [here](http://renlab.sdsc.edu/abnousa/snapHiC/singularity_releases) to avoid installation. If you don't have access to singularity or prefer your own installation, please follow the following steps:    
