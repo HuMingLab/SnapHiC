@@ -12,7 +12,7 @@ pip install -r requirements.txt
 ### 2. Required input files:
 1. A "tab-separated" or "tab-separated and gzipped" file of the mapped reads for each cell. For example, you can generate these files by running bwa-mem on your fastq files.
 2. chrom.sizes file for the genome of interest, which can be downloaded from [here](https://hgdownload.soe.ucsc.edu/downloads.html). Files for mm10, hg19 and hg38 are included in the `ext` directory. 
-3. A binned bed file of the filtered regions for the genome (the blacklist regions). Filtered regions and low mappability regions for mm10, hg19 and hg38 in 10KB resolution with the restriction enzyme MboI are included in the `ext` directory. 
+3. A binned bed file of the filtered regions for the genome (the blacklist regions). Filtered regions and low mappability regions for mm10, hg19 and hg38 at 10KB resolution with the restriction enzyme MboI are included in the `ext` directory. 
 
 ### 3. Run
 We strongly recommend using an HPC environment where you can request nodes/processors and allocate memory. As alternatives, we also provide run-files for multi-threaded run and single-processor system.
@@ -29,8 +29,8 @@ We strongly recommend using an HPC environment where you can request nodes/proce
 &Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the mapped read files. Starting from 1).  
 &Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download it from [here](https://hgdownload.soe.ucsc.edu/downloads.html)).  
 &Tab;`genome`="mm10" (Name of the reference genome. SnapHiC currently accepts mm10, hg19 and hg38). It is used to determine the number of autosomal chromosomes, and to generate .hic file for visualization in Juicebox.   
-&Tab;`filter_file`="ext/mm10_filter_regions.txt" (This is optional. We recommend providing a binned bed file for areas of low mappability or filtered regions of the genome, such as the ENCODE blacklist regions and the MHC locus. We have included these files for mm10, hg19 and hg38 in the *ext* directory).   
-&Tab;Additionally for the threaded run (single node with no scheduler), you will need to specify *num_proc* - number of threads to use).  
+&Tab;`filter_file`="ext/mm10_filter_regions.txt" (This is optional. We recommend providing a binned bed file for regions of low mappability or filtered regions of the genome, such as the ENCODE blacklist regions and the MHC locus. We provided these files for mm10, hg19 and hg38 at 10Kb resolution with the restriction enzyme MboI in the *ext* directory).   
+&Tab;Additionally for the **threaded** run (single node without job scheduler), you need to specify *num_proc* - the number of threads to use).  
 4. Execute the run file with the modified variables (or submit it to the job scheduler). 
 
 ### 4. The output file: 
