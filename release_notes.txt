@@ -1,0 +1,5 @@
+version 0.1.0
+- candidate calling condition has changed from tstat
+- candidate clustering method has changed to Rodriguez and Laio's algorithm
+- rwr matrices are not stored by default, and are kept only to upper-distance if asked to store.
+
