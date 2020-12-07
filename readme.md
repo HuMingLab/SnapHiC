@@ -1,7 +1,7 @@
 # SnapHiC: Single Nucleus Analysis Pipeline for Hi-C Data 
 ## Identifying chomatin loops from single cell Hi-C data
 ### 1. Installation
-Singularity images of the pipeline will be provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/singularity_releases) eliminating the need for installation. If you don't have access to singularity or would prefer your own installation please follow the steps below:    
+You can download the singularity image of SnapHiC [here](http://renlab.sdsc.edu/abnousa/snapHiC/singularity_releases) to avoid installation. If you don't have access to singularity or would prefer your own installation, please follow the following steps:    
 1. Install python version >= 3.6 
 2. Make sure MPI (e.g. [open-mpi](https://www.open-mpi.org/)) is installed on your system and is on your path (`which mpicc` should return a path). 
 3. Use pip to install the required modules: 
