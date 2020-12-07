@@ -50,7 +50,7 @@ In addition to the output file metioned above, SnapHiC generates multiple interm
 
 ### 5. Testing  
 You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) to test your installation of the program. This dataset contains 100 oligodendrocytes from Lee et al study (PMID: 31501549, Ref: hg19). The output for this dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100_output.tar). 
-After downloading the input file, untar it so that you can find 100 input files, each representing the mapped reads for one cell. Run files to generate these results (*test_run_scripts/run_test_odc_step1.sh* and *test_run_scripts/run_test_odc_step2.sh* scripts) are in the included with the SnapHiC software. You can set the input/output directories, load the required modules, and submit them for run.
+After downloading the input file, untar it so that you can find 100 input files, each representing the mapped reads for one cell. Run files to generate these results are included in the package at *test_run_scripts* directory. You can set the input/output directories, load the required modules, and submit them for run.
 
 ### 6. Recommendations for parallel setting:  
 You can use as many processors as possible for the RWR step (first script), as long as you provide sufficient memory for the remaining steps.  
