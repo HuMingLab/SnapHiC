@@ -20,14 +20,14 @@ We strongly recommend using an HPC environment where you can request nodes/proce
 2. Edit the *run_step1.sh* and *run_step2.sh* files. If you use an HPC cluster with a job scheduler such as PBS or SLURM (we strongly recommend), modify the first few lines to set the required nodes, processors, memory, and load the required modules (python3.6+, MPI, and the packages installed using pip as described in the Installation section above). If you use a regular compute node with no job scheduler, or a desktop computer, you can skip this step (you still need big memory and the computing is slow).    
 3. Set the following variables in the *run_step1.sh* and *run_step2.sh* files:  
 &Tab;`snapHiC_dir`="/path/to/directory/where/snapHiC/is/located/" (path to the directory contains snap.py file of the SnapHiC pipeline).  
-&Tab;`parallelism`="parallel" (can be one of the **parallel**, **threaded**, or **single-proc**. Use parallel if you are on HPC with job scheduler. Threaded if you have access to multiple processors but no job scheduler, and singl-proc otherwise).    
-&Tab;`number_of_processors`=15 (if you are using mutli-threaded or parallel setting, specify number of processors).  
-&Tab;`indir`="/path/where/the/mapped/data/are/stored"   (files should be tab separated. Can be gzipped).  
-&Tab;`suffix`="contacts.txt.gz" (Filename suffix for the mapped read files. This is used to distinguish input files if there are other files in the same input directory).  
+&Tab;`parallelism`="parallel" (it can be one of the **parallel**, **threaded**, or **single-proc**. Use **parallel** if you use an HPC with job scheduler, **threaded** if you use multiple processors without job scheduler, and **singl-proc** otherwise).    
+&Tab;`number_of_processors`=15 (if you use **threaded** or **parallel**, please specify the number of processors).  
+&Tab;`indir`="/path/where/the/mapped/data/are/stored" (files should be tab separated. They can be gzipped).  
+&Tab;`suffix`="contacts.txt.gz" (Filename suffix for the mapped read files, which is used to distinguish input files if there are other files in the same input directory).  
 &Tab;`outdir`="/path/where/the/output/will/be/saved"  
 &Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the mapped read files. Starting from 1).  
 &Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the mapped read files. Starting from 1).  
-&Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download it from the UCSC webpage if needed).  
+&Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download it from [here](https://hgdownload.soe.ucsc.edu/downloads.html)).  
 &Tab;`genome`="mm10" (Name of the reference genome. SnapHiC currently accepts mm10, hg19 and hg38). It is used to determine the number of autosomal chromosomes to process, as well as to create .hic file for visualization in Juicebox.   
 &Tab;`filter_file`="ext/mm10_filter_regions.txt" (This is optional. We recommend providing a binned bed file for areas of low mappability or filtered regions of the genome, such as the ENCODE blacklist regions and the MHC locus. We have included these files for mm10, hg19 and hg38 in the *ext* directory).   
 &Tab;Additionally for the threaded run (single node with no scheduler), you will need to specify *num_proc* - number of threads to use).  
