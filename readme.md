@@ -30,8 +30,8 @@ We strongly recommend using an HPC environment where you can request nodes/proce
 &Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the mapped read files. Starting from 1).  
 &Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the mapped read files. Starting from 1). 
 &Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download it from the UCSC webpage if needed).  
-&Tab;`genome`="mm10" (Name of the reference genome. SnapHiC currently accepts mm10 and hg19). It is used to determine the number of autosomal chromosomes to process, as well as to create .hic file for visualization in Juicebox.   
-&Tab;`filter_file`="ext/mm10_filter_regions.txt" (This is optional. We recommend providing a binned bed file for areas of low mappability or filtered regions of the genome, such as the ENCODE blacklist regions and the MHC locus. We have included these files for mm10 and hg19 in the *ext* directory) 
+&Tab;`genome`="mm10" (Name of the reference genome. SnapHiC currently accepts mm10, hg19 and hg38). It is used to determine the number of autosomal chromosomes to process, as well as to create .hic file for visualization in Juicebox.   
+&Tab;`filter_file`="ext/mm10_filter_regions.txt" (This is optional. We recommend providing a binned bed file for areas of low mappability or filtered regions of the genome, such as the ENCODE blacklist regions and the MHC locus. We have included these files for mm10, hg19 and hg38 in the *ext* directory) 
 &Tab;Additionally for the threaded run (single node with no scheduler), you will need to specify *num_proc* - number of threads to use).  
 4. Execute the run file with the modified variables (or submit it to the job scheduler). 
 
