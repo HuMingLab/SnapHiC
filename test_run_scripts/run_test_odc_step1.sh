@@ -1,0 +1,45 @@
+#!/bin/bash
+#PBS -q hotel
+#PBS -N snHiC_s1
+#PBS -l nodes=15:ppn=2
+#PBS -l walltime=50:00:00
+#PBS -l mem=1500GB
+#PBS -j oe
+#PBS -o log.${PBS_JOBNAME}.${PBS_JOBID}.log
+
+### SET THE DIRECTIVES ABOVE IF YOU ARE WORKING IN HPC WITH A JOB SCHEDULER
+### AND LOAD THE REQUIRED MODULES IF NEEDED. REQUIRES PYTHON3.6+ WITH 
+### MODULES TO BE INSTALLED USING "pip install -r requirements.txt"
+cd ${PBS_O_WORKDIR}
+module purge
+module load intel/2018.1.163
+module load intelmpi/2018.1.163
+unset PYTHONPATH
+export PATH=/home/abnousa/anaconda3_2/bin:$PATH
+
+############################################################################
+###                            User Variables                            ###
+############################################################################
+snapHiC_dir="/projects/ps-renlab/abnousa/snapHiC"	#where the snapHiC is located on your system
+parallelism="parallel" 					#options are "parallel" "threaded" "singleproc"
+number_of_processors=30					#required only if parallelism is set to parallel or threaded
+indir="/oasis/tscc/scratch/abnousa/snapHiC/inputs/Ecker/ODC_100" #directory containing input files (e.g. *.pairs files)
+suffix="_indexed_contacts.txt.gz" 			#all input files should have the same suffix. it can be an empty string "", or ".txt"
+outdir="/oasis/tscc/scratch/abnousa/odc_100_output" 						#directory where output files will be stored
+chrs="2 4" 						#2 integer numbers, the column number of chromosomes in the input files. (e.g. "3 5") starting from 1
+pos="3 5" 							#2 integer numbers, the column number of mapped position of read-pairs. (e.g.  "4 6") starting from 1
+chrlen="/projects/ps-renlab/abnousa/snapHiC/ext/hg19.chrom.sizes" 		#path to the chrom.sizes file"
+genome="hg19"  						#genomeID that will be used for genereation of ".hic" file 
+filter_file="/projects/ps-renlab/abnousa/snapHiC/ext/hg19_filter_regions.txt" 	#regions to be filtered, for example due to low mappability
+steps="bin rwr" 					#steps to run the pipeline. Recommended (1) "bin rwr" at first, (2) then  "hic interaction postprocess"
+
+############################################################################
+
+
+if [[ "$parallelism" == "parallel" ]]; then
+	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --parallel
+elif [[ "$parallelism" == "threaded" ]]; then
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --threaded -n $number_of_processors
+else
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps
+fi

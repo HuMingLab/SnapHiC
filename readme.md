@@ -16,22 +16,19 @@ pip install -r requirements.txt
 ### 3. Run
 We strongly recommend using an HPC environment where you can request nodes/processors and allocate memory. However, run-files for multi-threaded run and single-processor system are also provided.
 1. Put all the mapped read files, one for each cell, into the same directory. In each file, one line represents one mapped read pair. For each mapped read pair, the file should contain at least 2 columns for chromsomes and 2 columns for the mapped positions (bp).  
-2. Either one of the following options will work but we strongly recommend using the HPC cluster.  
-&Tab;**(I) For HPC clusters with a job scheduler such as PBS or SLURM**:  
-&Tab;&Tab; Use the template provided for the PBS scheduler: *run_hpc1.sh*, followed by *run_hpc2.sh*. Set the variables in these files based on the point (3) below. (These files use the --parallel flag).  
-&Tab;**(II) For a computing node with multiple cores but no scheduler**:  
-&Tab;&Tab; Use the *run_threaded.sh* file as the template. Set the variables in this file based on the point (3) below. (This file uses --threaded flag, along with the number of threads you specify to use).  
-&Tab;**(III) For a single core non-parallel run**:  
-&Tab;&Tab; This can be extremely slow. We do not recommend using this mode for a large number of cells. Use *run_desktop.sh*.
-3. Regardless of which running method you use, you need to set the following variables in the corresponding run files:  
-&Tab;`indir`="/path/where/the/mapped/data/are/stored"   
-&Tab;`suffix`="contacts.txt" (Filename suffix for the mapped read files. This is used to distinguish input files if there are other files in the same input directory).  
+2. Open the *run_step1.sh* and *run_step2.sh* files. If you are using a HPC cluster equipped with a job scheduler such as PBS or SLURM (and we strongly recommend that), modify the first few lines by setting the required nodes, processors, memory, as well as loading the required modules (python3.6+, MPI, and the packages installed using pip as described in the Installation section above). If you are using a regular compute node with no job scheduler, or a desktop computer, you can skip this  step (remember you will still need large amounts of memory and the runtime might be an issue).    
+3. In the *run_step1.sh* and *run_step2.sh* files set the following variables:
+&Tab;`snapHiC_dir`="/path/to/directory/where/snapHiC/is/located/" (path to the directory where snap.py file of the pipeline is located).  
+&Tab;`parallelism`="parallel" (can be one of the **parallel**, **threaded**, or **single-proc**. Use parallel if you are on HPC with job scheduler. Threaded if you have access to multiple processors but no job scheduler, and singl-proc otherwise).    
+&Tab;`number_of_processors`=15 (if you are using mutli-threaded or parallel setting, specify number of processors).  
+&Tab;`indir`="/path/where/the/mapped/data/are/stored"   (files should be tab separated. Can be gzipped).  
+&Tab;`suffix`="contacts.txt.gz" (Filename suffix for the mapped read files. This is used to distinguish input files if there are other files in the same input directory).  
 &Tab;`outdir`="/path/where/the/output/will/be/saved"  
 &Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the mapped read files. Starting from 1).  
-&Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the mapped read files. Starting from 1). 
+&Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the mapped read files. Starting from 1).  
 &Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download it from the UCSC webpage if needed).  
 &Tab;`genome`="mm10" (Name of the reference genome. SnapHiC currently accepts mm10, hg19 and hg38). It is used to determine the number of autosomal chromosomes to process, as well as to create .hic file for visualization in Juicebox.   
-&Tab;`filter_file`="ext/mm10_filter_regions.txt" (This is optional. We recommend providing a binned bed file for areas of low mappability or filtered regions of the genome, such as the ENCODE blacklist regions and the MHC locus. We have included these files for mm10, hg19 and hg38 in the *ext* directory) 
+&Tab;`filter_file`="ext/mm10_filter_regions.txt" (This is optional. We recommend providing a binned bed file for areas of low mappability or filtered regions of the genome, such as the ENCODE blacklist regions and the MHC locus. We have included these files for mm10, hg19 and hg38 in the *ext* directory).   
 &Tab;Additionally for the threaded run (single node with no scheduler), you will need to specify *num_proc* - number of threads to use).  
 4. Execute the run file with the modified variables (or submit it to the job scheduler). 
 
@@ -52,7 +49,7 @@ In addition to the output file metioned above, SnapHiC generates multiple interm
 
 ### 5. Testing  
 You can use the dataset provided [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) to test your installation of the program. This dataset contains 100 oligodendrocytes from Lee et al study (PMID: 31501549, Ref: hg19). The output for this dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100_output.tar). 
-After downloading the input file, untar it so that you can find 100 files, each represents the mapped reads for one cell. Run files to generate these results (*run_test_odc_step1.sh* and *run_test_odc_step2.sh* scripts) are in the SnapHiC software. You can set the input/output directories and submit them for run.
+After downloading the input file, untar it so that you can find 100 input files, each representing the mapped reads for one cell. Run files to generate these results (*test_run_scripts/run_test_odc_step1.sh* and *test_run_scripts/run_test_odc_step2.sh* scripts) are in the included with the SnapHiC software. You can set the input/output directories, load the required modules, and submit them for run.
 
 ### 6. Recommendations for parallel setting:  
 You can use as many processors as possible for the RWR step (first script), as long as you provide sufficient memory for the remaining steps.  

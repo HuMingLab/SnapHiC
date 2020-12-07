@@ -30,7 +30,7 @@ def main():
     logger.dump_args(args)
     logger.write(f'Starting operation in {parallel_mode} mode')
     #print('aall is back', rank, n_proc)
-    chrom_dict = parse_chrom_lengths(args.chrom, args.chr_lens, args.genome)
+    chrom_dict = parse_chrom_lengths(args.chrom, args.chr_lens, args.genome, args.max_chrom_number)
     logger.write(f'chromosome lengths file is read. Processing {len(chrom_dict)} chromosomes.')
     #print(parallel_mode)    
     logger.flush()
@@ -221,15 +221,17 @@ def main():
     logger.write('Exiting the program')
     logger.flush()
 
-def parse_chrom_lengths(chrom, chrom_lens_filename, genome):
-    if not chrom or chrom == "None":
-        chrom_count = 22 if genome.startswith('hg') else 19 if genome.startswith("mm") else None
-        if not chrom_count:
-            raise("Genome name is not recognized")
-        chrom = ['chr' + str(i) for i in range(1, chrom_count + 1)]
-        #chrom = ["chr1", "chr2", "chr5", "chr16"]
+def parse_chrom_lengths(chrom, chrom_lens_filename, genome, max_chrom_number):
+    if not max_chrom_number or max_chrom_number == -1:
+        if not chrom or chrom == "None":
+            chrom_count = 22 if genome.startswith('hg') else 19 if genome.startswith("mm") else None
+            if not chrom_count:
+                raise("Genome name is not recognized. Use --max-chrom-number")
+            chrom = ['chr' + str(i) for i in range(1, chrom_count + 1)]
+        else:
+            chrom = [c.strip() for c in chrom.split()]
     else:
-        chrom = [chrom]
+        chrom = ['chr' + str(i) for i in range(1, max_chrom_number + 1)]
     with open(chrom_lens_filename) as infile:
         lines = infile.readlines()
     chrom_lens = {line.split()[0]: int(line.split()[1]) for line in lines if line.split()[0] in chrom}
@@ -348,6 +350,8 @@ def create_parser():
                         help = 'if set, will skip generation of .mcool file.', required = False)
     parser.add_argument('--keep-rwr-matrix', action = 'store_true', default = False, \
                         help = 'if set, will store the computed rwr matrix in entirety in npy format.', required = False)
+    parser.add_argument('--max-chrom-number', action = "store", required = False, type = int, \
+                        help = "biggest chromosome number to consider in genome, for example 22 for hg", default = -1)
     return parser
     
 
