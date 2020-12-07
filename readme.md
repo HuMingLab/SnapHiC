@@ -15,7 +15,7 @@ pip install -r requirements.txt
 3. A binned bed file of the filtered regions for the genome (the blacklist regions). Filtered regions and low mappability regions for mm10, hg19 and hg38 in 10KB resolution with the restriction enzyme MboI are included in the `ext` directory. 
 
 ### 3. Run
-We strongly recommend using an HPC environment where you can request nodes/processors and allocate memory. However, run-files for multi-threaded run and single-processor system are also provided.
+We strongly recommend using an HPC environment where you can request nodes/processors and allocate memory. As alternatives, we also provide run-files for multi-threaded run and single-processor system.
 1. Put all the mapped read files, one for each cell, into the same directory. In each file, one line represents one mapped read pair. For each mapped read pair, the file should contain at least 2 columns for chromsomes and 2 columns for the mapped positions (bp).  
 2. Open the *run_step1.sh* and *run_step2.sh* files. If you are using a HPC cluster equipped with a job scheduler such as PBS or SLURM (and we strongly recommend that), modify the first few lines by setting the required nodes, processors, memory, as well as loading the required modules (python3.6+, MPI, and the packages installed using pip as described in the Installation section above). If you are using a regular compute node with no job scheduler, or a desktop computer, you can skip this  step (remember you will still need large amounts of memory and the runtime might be an issue).    
 3. In the *run_step1.sh* and *run_step2.sh* files set the following variables:  
