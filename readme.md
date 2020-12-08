@@ -70,7 +70,7 @@ You can use as many processors as possible for the RWR step (first script), as l
 | mm10 | 400 | 10KB | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 2.4 hrs |  
  
 ### 7. More details on running SnapHiC:
-You need to run SnapHiC in the following two parts, which are described in the run-files. 
+We strongly recommend running SnapHiC in the following two parts, which are described in the run-files. 
 
 Part 1:
 ```
