@@ -26,11 +26,11 @@ We strongly recommend using an HPC environment where you can request multiple no
 &Tab;`indir`="/path/where/the/mapped/data/are/stored" (files should be tab separated. They can be gzipped).  
 &Tab;`suffix`="contacts.txt.gz" (Filename suffix for the mapped read files, which is used to distinguish input files if there are other files in the same input directory).  
 &Tab;`outdir`="/path/where/the/output/will/be/saved"  
-&Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the mapped read files. Starting from 1).  
-&Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the mapped read files. Starting from 1).  
+&Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the contact files. Starting from 1).  
+&Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the contact files. Starting from 1).  
 &Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download it from [here](https://hgdownload.soe.ucsc.edu/downloads.html)).  
 &Tab;`genome`="mm10" (Name of the reference genome. SnapHiC currently accepts mm10, hg19 and hg38). It is used to determine the number of autosomal chromosomes, and to generate .hic file for visualization in Juicebox.   
-&Tab;`filter_file`="ext/mm10_filter_regions.txt" (This is optional. We recommend providing a binned bed file for regions with low mappability or filtered regions of the genome, such as the ENCODE blacklist regions and the MHC locus. We provided these files for mm10, hg19 and hg38 at 10Kb resolution with the restriction enzyme MboI in the *ext* directory).   
+&Tab;`filter_file`="ext/mm10_filter_regions.txt" (A binned bed file of the genomic regions that are excluded from loop calling, such as the low mappability regions and the ENCODE blacklist regions. We provided these files for mm10, hg19 and hg38 at 10Kb resolution with the restriction enzyme MboI in the *ext* directory).   
 &Tab;If you use **threaded** (single node without job scheduler), you need to specify *num_proc* - the number of threads to use).  
 4. Execute the run file with the modified variables, or submit it to the job scheduler. 
 
