@@ -69,10 +69,12 @@ You can use as many processors as possible for the RWR step (first script), as l
  
 ### 7. More details on running SnapHiC:
 You need to run SnapHiC in the following two parts, which are described in the run-files. 
+
 Part 1:
 ```
 python3 snap.py -i <input-directory> -o <output-directory> -c <column-numbers-for-chromosomes-in-data> -p <column-numbers-for-read-positions-in-data> -l <chromosome-lengths-file> -g <genome: one-of-hg/mm> [--parallel] --steps "bin rwr"
 ```
+
 followed by Part 2:
 ```
 python3 snap.py -i <input-directory> -o <output-directory> -l <chromosome-lengths-file> -g <genome: one-of-hg/mm> [--parallel] --steps "hic interaction postprocess"
