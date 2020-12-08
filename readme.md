@@ -44,7 +44,7 @@ The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postpro
 - i, j, min_dist, ro, rownum, delta, ref_neighbor, eta, rank, transformed_rank, transformed_eta: extra columns used to group nearby loop candidates into loop clusters. See details in the manuscript.
 - eta_cluster: cluster number (ID), which is chromosome specific. 
 - cluster_size: the number of loop candidates within a cluster. 
-- neg_log10_fdr: measure of the strength of the cluster. This number is the same for all loop candidates within a cluster. We recommend using *fdr_dist* as the measure of the chromatin loop strength. 
+- neg_log10_fdr: measure of the strength of the cluster. This value is the same for all loop candidates within a cluster. We recommend using *fdr_dist* as the measure of the chromatin loop strength. 
 - summit: all chromatin loops in the summits file have a value of 1. Note that there might be multiple summits for the same cluster. 
 
 In addition to the output file mentioned above, SnapHiC generates multiple intermediate output files. Each of the five steps in the process (bin, rwr, hic, interaction and postprocess) creates a separate sub-directory in the `outdir`. The first two steps (bin and rwr) generate output files for each chromosome in each cell. The remaining three steps (hic, interaction and postprocess) combine all cells and generate one file for each chromosome. 
