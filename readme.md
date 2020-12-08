@@ -55,8 +55,7 @@ You can use this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/te
 After downloading the input file, untar it so that you can find 100 input files, each representing the mapped read pairs for one cell. Run-files to generate these results are included in the SnapHiC package at the *test_run_scripts* directory. You can set the input/output directories, load the required modules, and submit the run-files.
 
 ### 6. Recommendations for parallel setting:  
-You can use as many processors as possible for the RWR step (first script), as long as you provide sufficient memory for the remaining steps.  
-The size of memory and the number of processors per node are different for different reference genomes and different numbers of cells in the dataset. Here are the setting we have used in our study.  
+You can use as many processors as possible for the RWR step (first script), as long as you provide sufficient memory for the remaining steps. The size of memory and the number of processors per node are different for different reference genomes and different numbers of cells in the dataset. Here are the setting we have used in our study.  
 | genome | #cells | binsize | distance | run step | nodes | processors per node | memory per node | runtime |  
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |  
 | mm10 | 100 | 10KB | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 2.4 hrs |  
