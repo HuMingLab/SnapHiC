@@ -16,7 +16,7 @@ pip install -r requirements.txt
 3. A binned bed file of the filtered regions for the genome (the blacklist regions). Filtered regions and low mappability regions for mm10, hg19 and hg38 at 10KB resolution with the restriction enzyme MboI are included in the `ext` directory. Local genomic features (including mappability scores) for different reference genomes, different bin resolutions, and different restriction enzymes can be downloaded [here](http://enhancer.sdsc.edu/yunjiang/resources/genomic_features/).
 
 ### 3. Run
-We strongly recommend using an HPC environment where you can request nodes/processors and allocate memory. As alternatives, we also provide run-files for multi-threaded run and single-processor system.
+We strongly recommend using an HPC environment where you can request multiple nodes/processors and allocate memory. As alternatives, we also provide run-files for multi-threaded run and single-processor system.
 1. Put all the mapped read files, one for each cell, into the same directory.  
 2. Edit the *run_step1.sh* and *run_step2.sh* files. If you use an HPC cluster with a job scheduler such as PBS or SLURM (we strongly recommend), modify the first few lines to set the required nodes, processors, memory, and load the required modules (python3.6+, MPI, and the packages installed using pip as described in the Installation section above). If you use a regular compute node with no job scheduler, or a desktop computer, you can skip this step (you still need big memory and the computing is slow).    
 3. Set the following variables in the *run_step1.sh* and *run_step2.sh* files:  
