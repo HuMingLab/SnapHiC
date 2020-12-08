@@ -38,7 +38,7 @@ We strongly recommend using an HPC environment where you can request multiple no
 The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/combined.postprocessed.summits.bedpe*. This tab-separated file includes the following columns:  
 - chr1, x1, x2, chr2, y1, y2: start and end position of chromatin loops. 
 - outlier_count: number of cells with >1.96 normalized contact probability.  
-- pvalue, tstat, fdr_dist: statistical measures (P-values from the paired t-test, t-statistics from the paired t-test and false discovery rate at the same 1D genomic distance) computed for each chromatin loop. 
+- pvalue, tstat, fdr_dist: statistical measures (P-values from the paired t-test, t-statistics from the paired t-test and false discovery rate for all bin pairs at the same 1D genomic distance) computed for each chromatin loop. 
 - case_avg, control_avg: across all cells, the average normalized contact probability of each chromatin loop (case) and its local neighboring region (control). 
 - circle, donut, horizontal, vertical, lower_left: extra filters computed for each chromatin loop. See details in the manuscript. 
 - i, j, min_dist, ro, rownum, delta, ref_neighbor, eta, rank, transformed_rank, transformed_eta: extra columns used to group nearby loop candidates into loop clusters. See details in the manuscript.
