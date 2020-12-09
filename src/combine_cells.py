@@ -149,7 +149,10 @@ def combine_chrom_hic(directory, no_cool, no_hic, genome, chrom_sizes_filename, 
     for fname in chrom_files:
         os.remove(fname)
     if not no_hic:
-        subprocess.check_call(" ".join(["java -jar utils/juicer_tools_1.22.01.jar pre", output_filename, hic_filename, genome]), \
+        juicer_path = os.path.realpath(__file__)
+        juicer_path = juicer_path[:juicer_path.rfind('/')]
+        juicer_path = juicer_path[:juicer_path.rfind('/')]
+        subprocess.check_call(" ".join([f"java -jar {juicer_path}/utils/juicer_tools_1.22.01.jar pre", output_filename, hic_filename, genome]), \
                               shell = True)
     if not no_cool:
         subprocess.check_call(" ".join(["cooler cload pairs --zero-based --assembly", genome, "-c1 2 -p1 3 -c2 6 -p2 7 --field count=9", chrom_sizes_filename + ":" + str(int(binsize)), output_filename, cooler_filename]), shell = True)
