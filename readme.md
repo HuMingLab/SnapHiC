@@ -16,7 +16,7 @@ pip install -r requirements.txt
 2. chrom.sizes file for the genome of interest, which can be downloaded from [here](https://hgdownload.soe.ucsc.edu/downloads.html). Files for mm10, hg19 and hg38 are included in the `ext` directory. 
 3. A binned bed file of the genomic regions that are excluded from loop calling. In our study, we defined mappability for each 10KB bin based on the restriction enzyme MboI, as described in our previous study [PMID: 23023982](https://pubmed.ncbi.nlm.nih.gov/23023982/). We removed all 10KB bins with mappability <=0.8, and all 10KB bins overlapped with the ENCODE blacklist regions. Filtered regions for mm10, hg19 and hg38 at 10KB resolution with the restriction enzyme MboI are included in the `ext` directory. Local genomic features (including mappability scores) for different reference genomes, different bin resolutions, and different restriction enzymes can be downloaded [here](http://enhancer.sdsc.edu/yunjiang/resources/genomic_features/).
 
-### 3. Run
+### 3. Running SnapHiC
 We strongly recommend using an HPC environment where you can request multiple nodes/processors and allocate memory. Alternatively, you can still run snapHiC using multithreaded and single-processor environments, provided enough memory and runtime.  
 1. Put all the mapped contact files, one for each cell, into the same directory.  
 2. Edit the *run_step1.sh* and *run_step2.sh* files. If you use an HPC cluster with a job scheduler such as PBS or SLURM (we strongly recommend), specify the required nodes, processors, memory, and load the required modules (python3.6+, MPI, java8+). If you use a regular compute node without job scheduler, or a desktop computer, you can skip this step (you still need big memory and the computation can be slow).    
