@@ -333,7 +333,7 @@ def create_parser():
                         help = 'multiplier for number of outlier cells for threshold used in finding candidates')
     parser.add_argument('--summit-gap', default = 2e4, type = int, required = False,
                         help = 'disallowed distance between summit points of a cluster')
-    parser.add_argument('--filter-file', default = None, required = False, \
+    parser.add_argument('--filter-file', default = None, required = True, \
                         help = "bed file of regions to be filtered. Regions should be binned")
     parser.add_argument('--clustering-gap', default = 1, type = int, required = False, \
                         help = 'number of allowed gaps between peaks in same cluster')

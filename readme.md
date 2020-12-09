@@ -1,14 +1,15 @@
 # SnapHiC: Single Nucleus Analysis Pipeline for Hi-C Data 
-# (Latest updates: December 7th, 2020)
+#### (Latest updates: December 7th, 2020)
 ## Identifying chromatin loops from single cell Hi-C data
 ### 1. Installation
-You can download the singularity image of SnapHiC [here](http://renlab.sdsc.edu/abnousa/snapHiC/singularity_releases) to avoid installation. If you don't have access to singularity or prefer your own installation, please follow the following steps:    
+You can download the singularity image/recipe of SnapHiC [here](http://renlab.sdsc.edu/abnousa/snapHiC/singularity_releases). If you don't have access to singularity or prefer your own installation, please follow the following steps:    
 1. Install python version >= 3.6 
 2. Make sure MPI (e.g. [open-mpi](https://www.open-mpi.org/)) is installed on your system and is on your path (`which mpicc` can return a path). 
 3. Use pip to install the required modules: 
 ```
 pip install -r requirements.txt
 ```
+4. Install Java version >= 8 and include it in your path. (Java is required for generating juicebox hic maps)
 
 ### 2. Required input files:
 1. "Tab-separated" or "tab-separated and gzipped" files containing the mapped read pairs (contacts) for each single cell. These contact files can be generated from raw fastq files following the methods decribed in previous publications ([PMID: 31384045](https://pubmed.ncbi.nlm.nih.gov/31384045/), [PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), and [PMID: 28682332](https://pubmed.ncbi.nlm.nih.gov/28682332/)), or other single cell Hi-C data preprocessing pipelines such as Dip-C (https://github.com/tanlongzhi/dip-c). In each file, one line represents one contact with 2 columns for chromosome name and 2 columns for the mapped positions (bp). 
@@ -16,10 +17,10 @@ pip install -r requirements.txt
 3. A binned bed file of the genomic regions that are excluded from loop calling. In our study, we defined mappability for each 10KB bin based on the restriction enzyme MboI, as described in our previous study [PMID: 23023982](https://pubmed.ncbi.nlm.nih.gov/23023982/). We removed all 10KB bins with mappability <=0.8, and all 10KB bins overlapped with the ENCODE blacklist regions. Filtered regions for mm10, hg19 and hg38 at 10KB resolution with the restriction enzyme MboI are included in the `ext` directory. Local genomic features (including mappability scores) for different reference genomes, different bin resolutions, and different restriction enzymes can be downloaded [here](http://enhancer.sdsc.edu/yunjiang/resources/genomic_features/).
 
 ### 3. Run
-We strongly recommend using an HPC environment where you can request multiple nodes/processors and allocate memory. As alternatives, we also provide run-files for multi-threaded and single-processor systems.
+We strongly recommend using an HPC environment where you can request multiple nodes/processors and allocate memory. Alternatively, you can still run snapHiC using multithreaded and single-processor environments, provided enough memory and runtime.  
 1. Put all the mapped contact files, one for each cell, into the same directory.  
-2. Edit the *run_step1.sh* and *run_step2.sh* files. If you use an HPC cluster with a job scheduler such as PBS or SLURM (we strongly recommend), specify the required nodes, processors, memory, and load the required modules (python3.6+, MPI, and the packages installed using pip as described in the Installation section above). If you use a regular compute node without job scheduler, or a desktop computer, you can skip this step (you still need big memory and the computing is slow).    
-3. Set the following variables in the *run_step1.sh* and *run_step2.sh* files:  
+2. Edit the *run_step1.sh* and *run_step2.sh* files. If you use an HPC cluster with a job scheduler such as PBS or SLURM (we strongly recommend), specify the required nodes, processors, memory, and load the required modules (python3.6+, MPI, java8+). If you use a regular compute node without job scheduler, or a desktop computer, you can skip this step (you still need big memory and the computation can be slow).    
+3. Set the following variables in the *run_step1.sh* and *run_step2.sh* files (segment :  
 &Tab;`snapHiC_dir`="/path/to/directory/where/snapHiC/is/located/" (path to the directory contains *snap.py* file of the SnapHiC pipeline).  
 &Tab;`parallelism`="parallel" (it can take one of the three options: **parallel**, **threaded**, or **single-proc**. Use **parallel** if you use an HPC with job scheduler, **threaded** if you use multiple processors without job scheduler, and **singl-proc** otherwise).    
 &Tab;`number_of_processors`=15 (if you use **threaded** or **parallel**, please specify the number of processors).  
@@ -41,23 +42,21 @@ The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postpro
 - pvalue, tstat, fdr_dist: statistical measures (P-values from the paired t-test, t-statistics from the paired t-test and false discovery rate for all bin pairs at the same 1D genomic distance, with respect to local background) computed for each chromatin loop. 
 - case_avg, control_avg: across all cells, the average normalized contact probability of each chromatin loop (case) and its local neighboring region (control). 
 - circle, donut, horizontal, vertical, lower_left: the average number of cells with >1.96 normalized contact probability at the five local background regions. SnapHiC applies extra folder change filters with respect to five local background regions. See details in the manuscript. 
-- i, j, min_dist, ro, rownum, delta, ref_neighbor, eta, rank, transformed_rank, transformed_eta: extra columns used to group nearby loop candidates into loop clusters. See details in the manuscript.
 - eta_cluster: cluster number (ID), which is chromosome specific. 
 - cluster_size: the number of loop candidates within a cluster. 
 - neg_log10_fdr: measure of the strength of the cluster. This value is the same for all loop candidates within a cluster. We recommend using *fdr_dist* as the measure of the chromatin loop strength. 
-- summit: all chromatin loops in the summits file have a value of 1. Note that there might be multiple summits for the same cluster. 
 
-SnapHiC also generates a .hic file stored at *<outdir>/hic/allChr.hic*. SnapHiC first computes the % of outlier cells (i.e., the proportion of cells with normalized contact probability >1.96), and then takes the integrer ceiling of 100*(% of outlier cells) to create a count matrix. SnapHiC then uses the Juicer software to convert the count matrix into a .hic file, which can be visualized in Juicebox.  
+SnapHiC also generates .hic and .cool files stored at *<outdir>/hic/allChr.[hic/cool]*. SnapHiC first computes the % of outlier cells (i.e., the proportion of cells with normalized contact probability >1.96), and then takes the integrer ceiling of 100*(% of outlier cells) to create a count matrix. SnapHiC then uses the Juicer tools software and cooler package to convert the count matrix into .hic/.cool file. User can skip this map generation by including **--no-cool** and **--no-hic** arguments in their execution.  
 
 In addition to the output files mentioned above, SnapHiC generates multiple intermediate output files. Each of the five steps in the process (bin, rwr, hic, interaction and postprocess) creates a separate sub-directory in the `outdir`. The first two steps (bin and rwr) generate output files for each chromosome in each cell. The remaining three steps (hic, interaction and postprocess) combine all cells and generate one file for each chromosome. 
 
 ### 5. Testing SnapHiC 
-You can use this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2Gb) to test your installation of the SnapHiC pipeline. This sample dataset contains 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loop summits can be downloaded from [here](http://renlab.sdsc.edu/hum/ODC_100_summits.bedpe) (2.4Mb). The complete output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100_output.tar) (451Gb). 
+You can use this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB) to test your installation of the SnapHiC pipeline. This sample dataset contains 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loop summits can be downloaded from [here](http://renlab.sdsc.edu/hum/ODC_100_summits.bedpe) (2.4MB). The complete output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100_output.tar) (451GB). 
 
 After downloading the input file, untar it so that you can find 100 input files, each containing the mapped contacts for one cell. Run-files to generate these results are included in the SnapHiC package at the *test_run_scripts* directory. You can set the input/output directories, load the required modules, and submit the run-files.
 
 ### 6. Recommendations for parallel setting:  
-You can use as many processors as possible for the RWR step (first script), as long as you provide sufficient memory for the remaining steps. The size of memory and the number of processors per node are different for different reference genomes and different numbers of cells in the dataset. Here are the settings we have used in our study.  
+You can use as many processors as possible for the RWR step (first script), as long as there is sufficient memory for each processor (For 10kb resolution we recommend considering 30-40GB memory per processor). The remaining steps are performed chromosome-wise, therefore we recommend using at most as many processors as the number of chromosomes in the genome. Providing sufficient memory for each processor for the remaining steps is of importance as well; for 2Mb maximum allowed distance, 10Kb resolution, and for human and mouse genome, we recommend providing 50GB memory per processor. Here are the settings we have used in our study.  
 | genome | #cells | binsize | distance | run step | nodes | processors per node | memory per node | runtime |  
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |  
 | mm10 | 100 | 10KB | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 2.4 hrs |  

@@ -182,13 +182,17 @@ def find_candidates(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, gap_larg
                           (results['outlier_count'] > results['vertical'] * vertical_threshold_mult)]
             #print('pre', results.shape)
             if filter_file:
-                filter_regions = pd.read_csv(filter_file, sep = "\t", header = None)
-                filter_regions.rename({0:'chr', 1:'start'}, axis = 1, inplace = True)
-                #print('filters', filter_regions.shape)
-                for side in ['x1', 'y1']:
-                    results = results.merge(filter_regions, left_on = ['chr1', side], \
-                                       right_on = ['chr', 'start'], how = "outer", indicator = True)
-                    results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
+                try:
+                    filter_regions = pd.read_csv(filter_file, sep = "\t", header = None)
+                    filter_regions.rename({0:'chr', 1:'start'}, axis = 1, inplace = True)
+                    #print('filters', filter_regions.shape)
+                    for side in ['x1', 'y1']:
+                        results = results.merge(filter_regions, left_on = ['chr1', side], \
+                                           right_on = ['chr', 'start'], how = "outer", indicator = True)
+                        results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
+                except pd.errors.EmptyDataError:
+                    logger.write(f'\tprocessor {rank}: filter file was empty. Skipping to clustering.', \
+                             append_time = False, allow_all_ranks = True, verbose_level = 1)
                 results = results[columns]
             #print('post', results.shape)
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
@@ -250,7 +254,7 @@ def find_candidates_integer(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, 
             filter_regions.rename({0:'chr', 1:'start'}, axis = 1, inplace = True)
             for side in ['x1', 'y1']:
                 results = results.merge(filter_regions, left_on = ['chr1', side], \
-                                     right_on = ['chr', 'start'], how = "outer", indicator = True)
+                                       right_on = ['chr', 'start'], how = "outer", indicator = True)
                 results = results[results['_merge'] == 'left_only'].drop('_merge', axis = 1)
             results = results[columns]
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
@@ -277,7 +281,7 @@ def combine_postprocessed_chroms(directory):
     d = d[(d['summit'] == 1) & (d['cluster_size'] > 1)]
     for i in ['x1', 'x2', 'y1', 'y2']:
         d[i] = d[i].astype(int)
-    d.drop('fdr_chrom', axis = 1, inplace = True)
+    d.drop(['i', 'j', 'min_dist', 'ro', 'rownum', 'delta', 'ref_neighbor', 'eta', 'rank', 'transformed_rank', 'transformed_eta', 'summit', 'fdr_chrom'], axis = 1, inplace = True)
     summits_filename = os.path.join(directory, "combined.postprocessed.summits.bedpe")
     d.to_csv(summits_filename, sep = "\t", index = False)
 

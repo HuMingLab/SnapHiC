@@ -13,9 +13,10 @@
 cd ${PBS_O_WORKDIR}
 module purge
 module load intel/2018.1.163
-module load intelmpi/2018.1.163
+module load intelmpi/2018.1.163  #loads mpi
 unset PYTHONPATH
-export PATH=/home/abnousa/anaconda3_2/bin:$PATH
+export PATH=/home/abnousa/anaconda3_2/bin:$PATH #adds python with required packages to path
+export PATH="/etc/alternatives":$PATH #adds java to path
 
 ############################################################################
 ###                            User Variables                            ###
