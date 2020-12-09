@@ -18,13 +18,13 @@ pip install -r requirements.txt
 
 ### 3. Running SnapHiC
 We strongly recommend using an HPC environment where you can request multiple nodes/processors and allocate memory. Alternatively, you can still run snapHiC using multithreaded and single-processor environments, provided enough memory and runtime.  
-1. Put all the mapped contact files, one for each cell, into the same directory.  
+1. Put all the contact files, one for each cell, into the same directory.  
 2. Edit the *run_step1.sh* and *run_step2.sh* files. If you use an HPC cluster with a job scheduler such as PBS or SLURM (we strongly recommend), specify the required nodes, processors, memory, and load the required modules (python3.6+, MPI, java8+). If you use a regular compute node without job scheduler, or a desktop computer, you can skip this step (you still need big memory and the computation can be slow).    
 3. Set the following variables in the *run_step1.sh* and *run_step2.sh* files:  
 &Tab;`snapHiC_dir`="/path/to/directory/where/snapHiC/is/located/" (path to the directory contains the *snap.py* file in SnapHiC).  
 &Tab;`parallelism`="parallel" (it can take one of the three options: **parallel**, **threaded**, or **single-proc**. Use **parallel** if you use an HPC with job scheduler, **threaded** if you use multiple processors without job scheduler, and **singl-proc** otherwise).    
 &Tab;`number_of_processors`=15 (if you use **threaded** or **parallel**, please specify the number of processors).  
-&Tab;`indir`="/path/where/the/mapped/data/are/stored" (files should be tab separated. They can be gzipped).  
+&Tab;`indir`="/path/where/the/contact/files/are/stored" (contact files should be tab separated. They can be gzipped).  
 &Tab;`suffix`="contacts.txt.gz" (Filename suffix for the contact files, which is used to distinguish input files if there are other files in the same input directory).  
 &Tab;`outdir`="/path/where/the/output/will/be/saved"  
 &Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the contact files. Starting from 1).  
