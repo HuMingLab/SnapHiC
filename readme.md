@@ -9,7 +9,7 @@ You can download the singularity image/recipe of SnapHiC [here](http://renlab.sd
 ```
 pip install -r requirements.txt
 ```
-4. Install Java version >= 8 and include it in your path. Java is required to generate .hic files for Juicebox visualization.
+4. Install Java version >= 8 and include it in your path. Java is required to generate .hic files for visualization in Juicebox.
 
 ### 2. Required input files:
 1. "Tab-separated" or "tab-separated and gzipped" files containing the mapped read pairs (contacts) for each single cell. These contact files can be generated from raw fastq files following the methods decribed in previous publications ([PMID: 31384045](https://pubmed.ncbi.nlm.nih.gov/31384045/), [PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), and [PMID: 28682332](https://pubmed.ncbi.nlm.nih.gov/28682332/)), or other single cell Hi-C data preprocessing pipelines such as Dip-C (https://github.com/tanlongzhi/dip-c). In each file, one line represents one contact with 2 columns for chromosome name and 2 columns for the mapped positions (bp). 
