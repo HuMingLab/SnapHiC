@@ -67,7 +67,7 @@ In addition to the output files mentioned above, SnapHiC generates multiple inte
 
 <h3 id=testing-snaphic>5. Testing SnapHiC</h3>
 
-To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), which contains the contact files of 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loops can be downloaded from [here](http://renlab.sdsc.edu/hum/ODC_100_summits.bedpe) (2.4MB). The complete subdirectory of output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100). 
+To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), which contains the contact files of 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loops can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100/odc_100.postprocessed.summits.bedpe) (2.4MB). The complete subdirectory of output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100). 
 
 After downloading this sample dataset, untar it to generate 100 contact files, each containing the contacts for one cell. Run-files for this sample dataset are in the *test_run_scripts* directory. You can set the input and output directories, load the required modules, and submit the run-files.
 
