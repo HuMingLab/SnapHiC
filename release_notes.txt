@@ -2,4 +2,5 @@ version 0.1.0
 - candidate calling condition has changed from tstat.
 - candidate clustering method has changed to the Rodriguez and Laio's algorithm (PMID: 24970081).
 - rwr matrices are not stored by default, and are kept only to upper-distance if asked to store.
+- added prefix to input arguments. Used in final output filename.
 
