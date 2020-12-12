@@ -229,7 +229,7 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     result.loc[:,'j'] = result['j'].astype(int)
     result = result[result['j'] - result['i'] <= max_distance_bin]
     return result
-    
+
 def call_interactions(indir, outdir, chrom_lens, binsize, dist, neighborhood_limit_lower = 3, \
                       neighborhood_limit_upper = 5, rank = 0, n_proc = 1, max_mem = 2, logger = None):
     logger.set_rank(rank)

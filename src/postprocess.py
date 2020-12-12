@@ -259,12 +259,13 @@ def find_candidates_integer(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, 
             results = results[columns]
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
  
-def combine_postprocessed_chroms(directory):
+def combine_postprocessed_chroms(directory, prefix):
+    prefix = prefix if prefix else combined
     output_filename_temp = os.path.join(directory, "combined.postprocessed.bedpe.temp")
-    output_filename = os.path.join(directory, "combined.postprocessed.bedpe")
+    output_filename = os.path.join(directory, f"{prefix}.postprocessed.all_candidates.bedpe")
     input_filepattern = directory + '/clustered.candidates.*.bedpe'
+    summits_filename = os.path.join(directory, f"{prefix}.postprocessed.summits.bedpe")
     if len(glob.glob(input_filepattern)) == 0:
-        summits_filename = os.path.join(directory, "combined.postprocessed.summits.bedpe")
         with open(summits_filename, 'w') as ofile:
             pass
         return None
@@ -277,13 +278,16 @@ def combine_postprocessed_chroms(directory):
         ofile.write("\t".join(headers) + "\n")
     proc = subprocess.Popen(" ".join(["cat",output_filename_temp,">>",output_filename]), shell = True)
     proc.communicate()
-    d = pd.read_csv(output_filename, sep = "\t")
-    d = d[(d['summit'] == 1) & (d['cluster_size'] > 1)]
+    all_candidates = pd.read_csv(output_filename, sep = "\t")
+    summits = all_candidates[(all_candidates['summit'] == 1) & (all_candidates['cluster_size'] > 1)]
     for i in ['x1', 'x2', 'y1', 'y2']:
-        d[i] = d[i].astype(int)
-    d.drop(['i', 'j', 'min_dist', 'ro', 'rownum', 'delta', 'ref_neighbor', 'eta', 'rank', 'transformed_rank', 'transformed_eta', 'summit', 'fdr_chrom'], axis = 1, inplace = True)
-    summits_filename = os.path.join(directory, "combined.postprocessed.summits.bedpe")
-    d.to_csv(summits_filename, sep = "\t", index = False)
+        all_candidates[i] = all_candidates[i].astype(int)
+        summits[i] = summits[i].astype(int)
+    columns_to_remove = ['i', 'j', 'min_dist', 'ro', 'rownum', 'delta', 'ref_neighbor', 'eta', 'rank', 'transformed_rank', 'transformed_eta', 'summit', 'fdr_chrom']
+    all_candidates.drop(columns_to_remove, axis = 1, inplace = True)
+    summits.drop(columns_to_remove + ['eta_cluster', 'cluster_size', 'neg_log10_fdr'], axis = 1, inplace = True)
+    all_candidates.to_csv(output_filename, sep = "\t", index = False)
+    summits.to_csv(summits_filename, sep = "\t", index = False)
 
 def label_propagate(dist_matrix_binary):
     temp_labels = np.argmax(dist_matrix_binary, axis = 1)

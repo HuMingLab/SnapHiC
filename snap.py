@@ -129,7 +129,8 @@ def main():
         logger.write('Per chromosome combine step is completed. Next we will generate one file containing all chromosomes')
         if rank == 0:
             combine_chrom_hic(directory = hic_dir, no_cool = args.no_cool, no_hic = args.no_hic, \
-                              genome = args.genome, chrom_sizes_filename = args.chr_lens, binsize = args.binsize)
+                              genome = args.genome, chrom_sizes_filename = args.chr_lens, \
+                              binsize = args.binsize, prefix = args.prefix)
         logger.write('Combine step is completed')
         logger.flush()
         #print("combined") 
@@ -215,7 +216,7 @@ def main():
             with multiprocessing.Pool(n_proc) as pool:
                 pool.starmap(postprocess, params)
         if rank == 0:
-            combine_postprocessed_chroms(directory = postproc_dir)
+            combine_postprocessed_chroms(directory = postproc_dir, prefix = args.prefix)
         logger.write('Postprocessing step completed')
         logger.flush()
     logger.write('Exiting the program')
@@ -352,6 +353,8 @@ def create_parser():
                         help = 'if set, will store the computed rwr matrix in entirety in npy format.', required = False)
     parser.add_argument('--max-chrom-number', action = "store", required = False, type = int, \
                         help = "biggest chromosome number to consider in genome, for example 22 for hg", default = -1)
+    parser.add_argument('--prefix', action = 'store', required = False, default = None,
+                        help = "a prefix that will be added to the name of the final output files")
     return parser
     
 

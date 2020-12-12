@@ -138,10 +138,14 @@ def combine_cells(indir, outdir, outlier_threshold, chrom_lens, rank, n_proc, lo
         combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold, logger, rank)
         logger.write(f'\tprocessor {rank}: chromosome {chrom} is combined', verbose_level = 1, allow_all_ranks = True)
         
-def combine_chrom_hic(directory, no_cool, no_hic, genome, chrom_sizes_filename, binsize):
+def combine_chrom_hic(directory, no_cool, no_hic, genome, chrom_sizes_filename, binsize, prefix):
     output_filename = os.path.join(directory, "allChr.hic.input")
-    hic_filename = os.path.join(directory, "allChr.hic")
-    cooler_filename = os.path.join(directory, "allChr.cool")
+    if prefix:
+        hic_filename = os.path.join(directory, f"{prefix}.allChr.hic")
+        cooler_filename = os.path.join(directory, f"{prefix}.allChr.cool")
+    else:
+        hic_filename = os.path.join(directory, "allChr.hic")
+        cooler_filename = os.path.join(directory, "allChr.cool")
     chrom_files = glob.glob(directory + '/*.bedpe.hic.input')
     input_filepattern = directory + '/*.bedpe.hic.input'
     proc = subprocess.Popen('cat ' + input_filepattern + ' > ' + output_filename, shell = True)
