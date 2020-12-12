@@ -9,7 +9,9 @@
 5. [Testing SnapHiC](#testing-snaphic)
 6. [Recommendations for parallel setting](#recommendations-for-parallel-setting)
 7. [More details on runninng SnapHiC](#more-detail-on-running-snaphic)
+
 <h3 id=installation>1. Installation</h3>
+
 You can download the singularity image/recipe of SnapHiC [here](http://renlab.sdsc.edu/abnousa/snapHiC/singularity_releases). If you don't have access to singularity or prefer your own installation, please follow the following steps:    
 1. Install python version >= 3.6 
 2. Make sure MPI (e.g. [open-mpi](https://www.open-mpi.org/)) is installed on your system and is on your path (`which mpicc` can return a path). 
