@@ -60,7 +60,7 @@ SnapHiC also generates .hic and .cool files stored at *<outdir>/hic/allChr.[hic/
 
 In addition to the output files mentioned above, SnapHiC generates multiple intermediate output files. Each of the five steps in the process (bin, rwr, hic, interaction and postprocess) creates a separate sub-directory in the `outdir`. The first two steps (bin and rwr) generate output files for each chromosome in each cell. The remaining three steps (hic, interaction and postprocess) combine all cells and generate one file for each chromosome. 
 
-### 5. Testing SnapHiC 
+### 5. <h3 id=testing-snaphic>Testing SnapHiC</h3>
 To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), which contains the contact files of 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loops can be downloaded from [here](http://renlab.sdsc.edu/hum/ODC_100_summits.bedpe) (2.4MB). The complete subdirectory of output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100). 
 
 After downloading this sample dataset, untar it to generate 100 contact files, each containing the contacts for one cell. Run-files for this sample dataset are in the *test_run_scripts* directory. You can set the input and output directories, load the required modules, and submit the run-files.
