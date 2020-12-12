@@ -1,6 +1,14 @@
 # SnapHiC: Single Nucleus Analysis Pipeline for Hi-C Data 
 #### (Latest updates: December 7th, 2020, version 0.1.0)
 ## Identifying chromatin loops from single cell Hi-C data
+### Content:
+1. [Installation](#installation)
+2. [Required input files](#required-input-files)
+3. [Running SnapHiC](#running-snaphic)
+4. [Output Files](#the-output-file)
+5. [Testing SnapHiC](#testing-snaphic)
+6. [Recommendations for parallel setting](#recommendations-for-parallel-setting)
+7. [More details on runninng SnapHiC](#more-detail-on-running-snaphic)
 ### 1. Installation
 You can download the singularity image/recipe of SnapHiC [here](http://renlab.sdsc.edu/abnousa/snapHiC/singularity_releases). If you don't have access to singularity or prefer your own installation, please follow the following steps:    
 1. Install python version >= 3.6 
@@ -53,7 +61,7 @@ SnapHiC also generates .hic and .cool files stored at *<outdir>/hic/allChr.[hic/
 In addition to the output files mentioned above, SnapHiC generates multiple intermediate output files. Each of the five steps in the process (bin, rwr, hic, interaction and postprocess) creates a separate sub-directory in the `outdir`. The first two steps (bin and rwr) generate output files for each chromosome in each cell. The remaining three steps (hic, interaction and postprocess) combine all cells and generate one file for each chromosome. 
 
 ### 5. Testing SnapHiC 
-To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), which contains the contact files of 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loops can be downloaded from [here](http://renlab.sdsc.edu/hum/ODC_100_summits.bedpe) (2.4MB). The complete output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100_output.tar) (451GB). 
+To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), which contains the contact files of 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loops can be downloaded from [here](http://renlab.sdsc.edu/hum/ODC_100_summits.bedpe) (2.4MB). The complete subdirectory of output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100). 
 
 After downloading this sample dataset, untar it to generate 100 contact files, each containing the contacts for one cell. Run-files for this sample dataset are in the *test_run_scripts* directory. You can set the input and output directories, load the required modules, and submit the run-files.
 
