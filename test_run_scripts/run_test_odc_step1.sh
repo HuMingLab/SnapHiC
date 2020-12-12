@@ -39,9 +39,9 @@ prefix="odc_100"
 
 
 if [[ "$parallelism" == "parallel" ]]; then
-	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --parallel --prefix $prefix
+	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --parallel
 elif [[ "$parallelism" == "threaded" ]]; then
-	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --threaded -n $number_of_processors
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --threaded -n $number_of_processors
 else
-	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix
 fi

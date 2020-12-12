@@ -28,14 +28,15 @@ chrlen="/projects/ps-renlab/abnousa/snapHiC/ext/mm10.chrom.sizes" 		#path to the
 genome="mm10"  						#genomeID that will be used for genereation of ".hic" file 
 filter_file="/projects/ps-renlab/abnousa/snapHiC/ext/mm10_filter_regions.txt" 	#regions to be filtered, for example due to low mappability
 steps="bin rwr" 					#steps to run the pipeline. Recommended (1) "bin rwr" at first, (2) then  "hic interaction postprocess"
+prefix="datset_name"					#this will be used as a prefix for output file names
 
 ############################################################################
 
 
 if [[ "$parallelism" == "parallel" ]]; then
-	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --parallel
+	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --parallel
 elif [[ "$parallelism" == "threaded" ]]; then
-	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --threaded -n $number_of_processors
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps  --prefix $prefix --threaded -n $number_of_processors
 else
-	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix
 fi
