@@ -19,8 +19,8 @@ pip install -r requirements.txt
 ```
 4. Install Java version >= 8 and include it in your path. Java is required to generate .hic files for visualization in Juicebox.
 
-<h3 id=required-input-files>2. Required input files:</h3>  
-1. "Tab-separated" or "tab-separated and gzipped" files containing the mapped read pairs (contacts) for each single cell. These contact files can be generated from raw fastq files following the methods decribed in previous publications ([PMID: 31384045](https://pubmed.ncbi.nlm.nih.gov/31384045/), [PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), and [PMID: 28682332](https://pubmed.ncbi.nlm.nih.gov/28682332/)), or other single cell Hi-C data preprocessing pipelines such as Dip-C (https://github.com/tanlongzhi/dip-c). In each file, one line represents one contact with 2 columns for chromosome name and 2 columns for the mapped positions (bp).  
+<h3 id=required-input-files>2. Required input files:</h3>   
+1. "Tab-separated" or "tab-separated and gzipped" files containing the mapped read pairs (contacts) for each single cell. These contact files can be generated from raw fastq files following the methods decribed in previous publications ([PMID: 31384045](https://pubmed.ncbi.nlm.nih.gov/31384045/), [PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), and [PMID: 28682332](https://pubmed.ncbi.nlm.nih.gov/28682332/)), or other single cell Hi-C data preprocessing pipelines such as Dip-C (https://github.com/tanlongzhi/dip-c). In each file, one line represents one contact with 2 columns for chromosome name and 2 columns for the mapped positions (bp).   
 2. chrom.sizes file for the genome of interest, which can be downloaded from [here](https://hgdownload.soe.ucsc.edu/downloads.html). Files for mm10, hg19 and hg38 are included in the `ext` directory.  
 3. A binned bed file of the genomic regions that are excluded from loop calling. In our study, we defined mappability for each 10KB bin based on the restriction enzyme MboI, as described in our previous study [PMID: 23023982](https://pubmed.ncbi.nlm.nih.gov/23023982/). We removed all 10KB bins with mappability <=0.8, and all 10KB bins overlapped with the ENCODE blacklist regions. Filtered regions for mm10, hg19 and hg38 at 10KB resolution with the restriction enzyme MboI, i.e., bins with mappability <=0.8 and bins overlapped with the ENCODE blacklist regions, are included in the `ext` directory. Local genomic features (including mappability scores) for different reference genomes, different bin resolutions, and different restriction enzymes can be downloaded [here](http://enhancer.sdsc.edu/yunjiang/resources/genomic_features/).
 
@@ -43,7 +43,7 @@ We strongly recommend using an HPC environment where you can request multiple no
 &Tab;If you use **threaded** (single node without job scheduler), you need to specify *num_proc*, the number of threads to use.  
 4. Execute the run file with the modified variables, or submit it to the job scheduler. 
 
-<h3 id=output-files>4. The output file:</h3>
+<h3 id=the-output-file>4. The output file:</h3>
 The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* will be replaced by the library name provided as input via the **--prefix** argument. If no such argument is provided, it will be replaced with *combined*) This tab-separated file includes the following columns:  
 - chr1, x1, x2, chr2, y1, y2: start and end position of chromatin loops. 
 - outlier_count: the number of cells with >1.96 normalized contact probability (with respect to global background) at the loop summit.  
@@ -78,7 +78,7 @@ You can use as many processors as possible for the RWR step, as long as each pro
 | mm10 | 400 | 10KB | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 18.4 hrs |  
 | mm10 | 400 | 10KB | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 2.4 hrs |  
  
-<h3 id=more-details-on-running-snaphic>7. More details on running SnapHiC:</h3>
+<h3 id=more-detail-on-running-snaphic>7. More details on running SnapHiC:</h3>
 The operation in SnapHiC consists of five steps: (1) binning, (2) random walk with restart (RWR) computation, (3) combining cells, (4) computation of local background, (5) finalizing and postprocessing. You can specify which steps you want to run as a command line argument. To specify the steps, you can use the argument `--step` followed by any of the five options: 'bin', 'rwr', 'hic', 'interaction', and 'postprocess'. If you don't specify any steps, SnapHiC will run all five steps. 
 
 We strongly recommend running SnapHiC in the following two parts, which are described in the run-files. 
