@@ -30,8 +30,11 @@ pip install -r requirements.txt
 <h3 id=running-snaphic>3. Running SnapHiC</h3>
 
 We strongly recommend using an HPC environment where you can request multiple nodes/processors and allocate memory. Alternatively, you can still run snapHiC using multithreaded and single-processor environments, provided enough memory and runtime.  
+
 1. Put all the contact files, one for each cell, into the same directory.  
+
 2. Edit the *run_step1.sh* and *run_step2.sh* files. If you use an HPC cluster with a job scheduler such as PBS or SLURM (we strongly recommend), specify the required nodes, processors, memory, and load the required modules (python3.6+, MPI, java8+). If you use a regular compute node without job scheduler, or a desktop computer, you can skip this step (you still need big memory and the computation can be slow).    
+
 3. Set the following variables in the *run_step1.sh* and *run_step2.sh* files:  
 &Tab;`snapHiC_dir`="/path/to/directory/where/snapHiC/is/located/" (path to the directory contains the *snap.py* file in SnapHiC).  
 &Tab;`parallelism`="parallel" (it can take one of the three options: **parallel**, **threaded**, or **single-proc**. Use **parallel** if you use an HPC with job scheduler, **threaded** if you use multiple processors without job scheduler, and **singl-proc** otherwise).    
@@ -46,6 +49,7 @@ We strongly recommend using an HPC environment where you can request multiple no
 &Tab;`filter_file`="ext/mm10_filter_regions.txt" (A binned bed file of the genomic regions that are excluded from loop calling, such as the low mappability regions and the ENCODE blacklist regions. We provide these files for mm10, hg19 and hg38 at 10KB resolution with the restriction enzyme MboI in the *ext* directory).   
 &Tab;If you use **threaded** (single node without job scheduler), you need to specify *num_proc*, the number of threads to use. 
 &Tab;`prefix`="ODC" (Name of the dataset. This name will be used as a prefix in output file names, i.e. final summits and all_candidates files, as well as hic and cooler maps) 
+
 4. Execute the run file with the modified variables, or submit it to the job scheduler. 
 
 <h3 id=the-output-file>4. The output file:</h3> 
