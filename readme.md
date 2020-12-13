@@ -68,7 +68,7 @@ In addition, SnapHiC provides a file containing all the loop candidates (after r
 
 SnapHiC also generates .hic and .cool files stored at *<outdir>/hic/allChr.[hic/cool]*. SnapHiC first computes the % of outlier cells (i.e., the proportion of cells with normalized contact probability >1.96), and then takes the integer ceiling of 100*(% of outlier cells) to create a count matrix. SnapHiC then uses the Juicer software and the cooler software to convert the count matrix into .hic file and .cool file, respectively. User can skip this step by including **--no-hic** or **--no-cool** argument in the run file. 
 
-In addition to the output files mentioned above, SnapHiC generates multiple intermediate output files. Each of the five steps in the process (bin, rwr, hic, interaction and postprocess) creates a separate sub-directory in the `outdir`. The first two steps (bin and rwr) generate output files for each chromosome in each cell. The remaining three steps (hic, interaction and postprocess) combine all cells and generate one file for each chromosome. 
+In addition to the output files described above, SnapHiC generates multiple intermediate output files. Each of the five steps in the process (bin, rwr, hic, interaction and postprocess) creates a separate sub-directory in the `outdir`. The first two steps (bin and rwr) generate output files for each chromosome in each cell. The remaining three steps (hic, interaction and postprocess) combine all cells and generate one file for each chromosome. 
 
 <h3 id=testing-snaphic>5. Testing SnapHiC</h3>
 
