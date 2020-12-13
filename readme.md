@@ -54,9 +54,9 @@ We strongly recommend using an HPC environment where you can request multiple no
 
 <h3 id=the-output-file>4. Output files</h3> 
 
-The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* is the name of the dateset, which is provided via the **--prefix** argument. If user does not provide no the **--prefix** argument, * will be replaced with *combined*). This tab-separated file includes the following 17 columns:  
-- chr1, x1, x2, chr2, y1, y2: start and end position of chromatin loops. 
-- outlier_count: the number of cells with >1.96 normalized contact probability (with respect to global background) at the loop summit.  
+The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* is the name of the dateset, which is provided via the **--prefix** argument. If user does not provide the **--prefix** argument, * will be replaced with *combined*). This tab-separated file includes the following 17 columns:  
+- chr1, x1, x2, chr2, y1, y2: the start and end position of a loop. 
+- outlier_count: the number of cells with >1.96 normalized contact probability (with respect to global background) at a loop.  
 - pvalue, tstat, fdr_dist: statistical measures (P-values from the paired t-test, t-statistics from the paired t-test and false discovery rate for all bin pairs at the same 1D genomic distance, with respect to local background) computed for each chromatin loop. We recommend using fdr_dist as the measure of the chromatin loop strength.
 - case_avg, control_avg: across all cells, the average normalized contact probability of each chromatin loop (case) and its local neighboring region (control). 
 - circle, donut, horizontal, vertical, lower_left: the average number of cells with >1.96 normalized contact probability at the five local background regions. SnapHiC applies extra folder change filters with respect to five local background regions. See details in the manuscript. 
