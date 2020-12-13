@@ -41,7 +41,7 @@ We strongly recommend using an HPC environment where you can request multiple no
 &Tab;`parallelism`="parallel" (it can take one of the three options: **parallel**, **threaded**, or **single-proc**. Use **parallel** if you use an HPC with job scheduler, **threaded** if you use multiple processors without job scheduler, and **singl-proc** otherwise).    
 &Tab;`number_of_processors`=15 (if you use **threaded** or **parallel**, please specify the number of processors).  
 &Tab;`indir`="/path/where/the/contact/files/are/stored" (contact files should be tab separated. They can be gzipped).  
-&Tab;`suffix`="contacts.txt.gz" (File name suffix for the contact files, which is used to distinguish input files if there are other files in the same input directory).  
+&Tab;`suffix`="contacts.txt.gz" (File name suffix for the contact files, which is used to distinguish input files if the same input directory contains other files).  
 &Tab;`outdir`="/path/where/the/output/will/be/saved"  
 &Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the contact files. Starting from 1).  
 &Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the contact files. Starting from 1).  
