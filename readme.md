@@ -5,7 +5,7 @@
 1. [Installation](#installation)
 2. [Required input files](#required-input-files)
 3. [Running SnapHiC](#running-snaphic)
-4. [Output Files](#the-output-file)
+4. [Output files](#the-output-file)
 5. [Testing SnapHiC](#testing-snaphic)
 6. [Recommendations for parallel setting](#recommendations-for-parallel-setting)
 7. [More details on runninng SnapHiC](#more-detail-on-running-snaphic)
@@ -52,7 +52,7 @@ We strongly recommend using an HPC environment where you can request multiple no
 
 4. Execute the run file with the modified variables, or submit it to the job scheduler. 
 
-<h3 id=the-output-file>4. The output file:</h3> 
+<h3 id=the-output-file>4. Output files:</h3> 
 
 The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* will be replaced by the library name provided as input via the **--prefix** argument. If no such argument is provided, it will be replaced with *combined*) This tab-separated file includes the following columns:  
 - chr1, x1, x2, chr2, y1, y2: start and end position of chromatin loops. 
