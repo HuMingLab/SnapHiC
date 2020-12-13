@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 <h3 id=running-snaphic>3. Running SnapHiC</h3>
 
-We strongly recommend using an HPC environment where you can request multiple nodes/processors and allocate memory. Alternatively, you can still run snapHiC using multithreaded and single-processor environments, provided enough memory and runtime.  
+We strongly recommend using an HPC environment where you can request multiple nodes/processors and allocate memory. Alternatively, you can still run SnapHiC using multithreaded and single-processor environments, provided enough memory and runtime.  
 
 1. Put all the contact files, one for each cell, into the same directory.  
 
