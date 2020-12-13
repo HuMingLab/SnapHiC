@@ -14,7 +14,7 @@
 <h3 id=installation>1. Installation</h3>
 
 You can download the singularity image/recipe of SnapHiC [here](http://renlab.sdsc.edu/abnousa/snapHiC/singularity_releases). If you don't have access to singularity or prefer your own installation, please follow the following steps:    
-1. Install python version >= 3.6 
+1. Install python version >= 3.6. 
 2. Make sure MPI (e.g. [open-mpi](https://www.open-mpi.org/)) is installed on your system and is on your path (`which mpicc` can return a path). 
 3. Use pip to install the required modules: 
 ```
