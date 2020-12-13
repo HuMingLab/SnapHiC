@@ -48,7 +48,6 @@ We strongly recommend using an HPC environment where you can request multiple no
 &Tab;`genome`="mm10" (Name of the reference genome. SnapHiC currently accepts mm10, hg19 and hg38). It is used to determine the number of autosomal chromosomes, and to generate .hic file for visualization in Juicebox.   
 &Tab;`filter_file`="ext/mm10_filter_regions.txt" (A binned bed file of the genomic regions that are excluded from loop calling, such as the low mappability regions and the ENCODE blacklist regions. We provide these files for mm10, hg19 and hg38 at 10KB resolution with the restriction enzyme MboI in the *ext* directory).   
 &Tab;`prefix`="ODC" (Name of the dataset. This name will be used as a prefix in output file names, i.e. final summits and all_candidates files, as well as hic and cooler maps). 
-&Tab;If you use **threaded** (single node without job scheduler), you need to specify *num_proc*, the number of threads to use. 
 
 4. Execute the run file with the modified variables, or submit it to the job scheduler. 
 
