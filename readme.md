@@ -57,8 +57,8 @@ We strongly recommend using an HPC environment where you can request multiple no
 The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* is the name of the dateset, which is provided via the **--prefix** argument. If user does not provide the **--prefix** argument, * will be replaced with *combined*). This tab-separated file includes the following 17 columns:  
 - chr1, x1, x2, chr2, y1, y2: the start and end position of a loop. 
 - outlier_count: the number of cells with >1.96 normalized contact probability (with respect to global background) at a loop.  
-- pvalue, tstat, fdr_dist: statistical measures (P-values from the paired t-test, t-statistics from the paired t-test and false discovery rate for all bin pairs at the same 1D genomic distance, with respect to local background) computed for each chromatin loop. We recommend using fdr_dist as the measure of the chromatin loop strength.
-- case_avg, control_avg: across all cells, the average normalized contact probability of each chromatin loop (case) and its local neighboring region (control). 
+- pvalue, tstat, fdr_dist: statistical measures (P-values from the paired t-test, t-statistics from the paired t-test and false discovery rate for all bin pairs at the same 1D genomic distance, with respect to local background) computed for each loop. We recommend using fdr_dist as the measure of the loop strength.
+- case_avg, control_avg: across all cells, the average normalized contact probability of each loop (case) and its local neighborhood region (control). 
 - circle, donut, horizontal, vertical, lower_left: the average number of cells with >1.96 normalized contact probability at the five local background regions. SnapHiC applies extra folder change filters with respect to five local background regions. See details in the manuscript. 
  
 Additionaly, a second file containing all the candidates (less sigletons), will be stored in: *<outdir>/postprocessed/\*.postprocessed.all_candidates.bedpe*. In addition to the columns above, this file will contain the following extra columns:  
@@ -72,7 +72,7 @@ In addition to the output files mentioned above, SnapHiC generates multiple inte
 
 <h3 id=testing-snaphic>5. Testing SnapHiC</h3>
 
-To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), which contains the contact files of 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loops can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100/odc_100.postprocessed.summits.bedpe) (2.4MB). The complete subdirectory of output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100). 
+To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), which contains the contact files of 100 randomly selected oligodendrocytes from Lee et al study ([PMID: 31501549](https://pubmed.ncbi.nlm.nih.gov/31501549/), Ref: hg19). The final list of 6,249 loops can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100/odc_100.postprocessed.summits.bedpe) (1.3MB). The complete subdirectory of output files for this sample dataset can be downloaded from [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/output/Ecker/ODC_100). 
 
 After downloading this sample dataset, untar it to generate 100 contact files, each containing the contacts for one cell. Run-files for this sample dataset are in the *test_run_scripts* directory. You can set the input and output directories, load the required modules, and submit the run-files.
 
