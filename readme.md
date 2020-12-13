@@ -42,7 +42,7 @@ We strongly recommend using an HPC environment where you can request multiple no
 &Tab;`number_of_processors`=15 (if you use **threaded** or **parallel**, please specify the number of processors).  
 &Tab;`indir`="/path/where/the/contact/files/are/stored" (contact files should be tab separated. They can be gzipped).  
 &Tab;`suffix`="contacts.txt.gz" (File name suffix for the contact files, which is used to distinguish input files if the same input directory contains other files).  
-&Tab;`outdir`="/path/where/the/output/will/be/saved"  
+&Tab;`outdir`="/path/where/the/output/will/be/saved".  
 &Tab;`chrs`="2 4" (Two integers indicating the column numbers of the chromosomes in the contact files. Starting from 1).  
 &Tab;`pos`="3 5" (Two integers indicating the column numbers of the read mapped positions in the contact files. Starting from 1).  
 &Tab;`chrlen`="ext/mm10.chrom.sizes" (chrom.sizes file. You can download it from [here](https://hgdownload.soe.ucsc.edu/downloads.html)).  
