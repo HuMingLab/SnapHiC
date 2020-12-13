@@ -9,6 +9,7 @@
 5. [Testing SnapHiC](#testing-snaphic)
 6. [Recommendations for parallel setting](#recommendations-for-parallel-setting)
 7. [More details on runninng SnapHiC](#more-detail-on-running-snaphic)
+8. [Contact us](#contact-us)
 
 <h3 id=installation>1. Installation</h3>
 
@@ -112,5 +113,7 @@ In case you run out of memory and you suspect that some of the RWR computations 
 In addition, for steps 3 and 4, you need more memory per processors. If your dataset contains more than 100 cells, we recommend using 1, 2, or 3 processors per node for a node with ~120GB memory. By breaking down the computation into these two parts, you can optimally adjust your memory and processor per node according to your HPC resource and the number of cells in your dataset.  
 
 Additional arguments that can be used, which can be found by *python snap.py --help*. 
+
+<h3 id=contact-us-snaphic>8. Contact us:</h3>
 
 For any questions, comments and suggestions regarding SnapHiC, please submit an issue to Github with the details of your system and run. You can also send email to Armen Abnousi (<a.abnousi@gmail.com>) or Ming Hu (<hum@ccf.org>).
