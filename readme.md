@@ -94,7 +94,7 @@ You can use as many processors as possible for the RWR step, as long as each pro
 
 The operation in SnapHiC consists of five steps: (1) binning, (2) random walk with restart (RWR) computation, (3) combining cells, (4) computation of local background, (5) finalizing and postprocessing. You can specify which steps you want to run as a command line argument. To specify the steps, you can use the argument `--step` followed by any of the five options: 'bin', 'rwr', 'hic', 'interaction', and 'postprocess'. If you don't specify any steps, SnapHiC will run all five steps. 
 
-We strongly recommend running SnapHiC in the following two parts, which are described in the run-files. 
+We strongly recommend running SnapHiC in the following two parts, which are described in the run files. 
 
 Part 1:
 ```
