@@ -76,7 +76,7 @@ To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.e
 
 After downloading this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), untar it to generate 100 contact files, each containing the contacts for one cell. Run files for this sample dataset are in the *test_run_scripts* directory. You can set the input and output directories, load the required modules, and submit the run files.
 
-<h3 id=recommendations-for-parallel-setting>6. Recommendations for parallel setting:</h3>
+<h3 id=recommendations-for-parallel-setting>6. Recommendations for parallel setting</h3>
 
 You can use as many processors as possible for the RWR step, as long as each processor has sufficient memory. For 10Kb bin resolution, we recommend 30-40GB memory per processor. The remaining steps are performed for each chromosome separately, therefore, we recommend using as many processors as the number of chromosomes in the genome. Providing sufficient memory for each processor for the remaining steps is important. For 2Mb maximal genomic distance, 10Kb bin resolution, and for human and mouse genome, we recommend providing 20GB memory per processor. We do not recommend using more than 5 processors per node, as these processors are opening multiple files from the previous step to combine them and based on the *ulimit* set on your system, there might be a limit set on the number of open files. Here are the settings we have used in our study.  
 | genome | #cells | binsize | distance | run step | nodes | processors per node | memory per node | runtime |  
