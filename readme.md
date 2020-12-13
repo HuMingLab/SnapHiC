@@ -61,7 +61,7 @@ The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postpro
 - case_avg, control_avg: across all cells, the average normalized contact probability of each loop (case) and its local neighborhood region (control). 
 - circle, donut, horizontal, vertical, lower_left: the average number of cells with >1.96 normalized contact probability at the five local background regions. SnapHiC applies extra folder change filters with respect to five local background regions. See details in the manuscript. 
  
-In addition, SnapHiC provides a file containing all the loop candidates in the file: *<outdir>/postprocessed/\*.postprocessed.all_candidates.bedpe*. In addition to the 17 columns described above, this file contains the following three extra columns:  
+In addition, SnapHiC provides a file containing all the loop candidates (after removing singletons) in the file: *<outdir>/postprocessed/\*.postprocessed.all_candidates.bedpe*. In addition to the 17 columns described above, this file contains the following three extra columns:  
 - eta_cluster: cluster number (ID), which is chromosome specific. 
 - cluster_size: the number of loop candidates within a cluster. 
 - neg_log10_fdr: measure of the strength of the cluster. This value is the same for all loop candidates within the same cluster. We recommend using *fdr_dist* as the measure of the loop strength. 
