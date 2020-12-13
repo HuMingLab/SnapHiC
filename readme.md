@@ -54,7 +54,7 @@ We strongly recommend using an HPC environment where you can request multiple no
 
 <h3 id=the-output-file>4. Output files</h3> 
 
-The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* will be replaced by the library name provided as input via the **--prefix** argument. If no such argument is provided, it will be replaced with *combined*) This tab-separated file includes the following columns:  
+The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* is the name of the dateset, which is provided via the **--prefix** argument. If user does not provide no the **--prefix** argument, * will be replaced with *combined*). This tab-separated file includes the following 17 columns:  
 - chr1, x1, x2, chr2, y1, y2: start and end position of chromatin loops. 
 - outlier_count: the number of cells with >1.96 normalized contact probability (with respect to global background) at the loop summit.  
 - pvalue, tstat, fdr_dist: statistical measures (P-values from the paired t-test, t-statistics from the paired t-test and false discovery rate for all bin pairs at the same 1D genomic distance, with respect to local background) computed for each chromatin loop. We recommend using fdr_dist as the measure of the chromatin loop strength.
