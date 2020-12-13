@@ -114,6 +114,6 @@ In addition, for steps 3 and 4, you need more memory per processors. If your dat
 
 Additional arguments that can be used, which can be found by *python snap.py --help*. 
 
-<h3 id=contact-us-snaphic>8. Contact us:</h3>
+<h3 id=contact-us>8. Contact us:</h3>
 
 For any questions, comments and suggestions regarding SnapHiC, please submit an issue to Github with the details of your system and run. You can also send email to Armen Abnousi (<a.abnousi@gmail.com>) or Ming Hu (<hum@ccf.org>).
