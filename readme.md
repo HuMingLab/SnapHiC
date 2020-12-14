@@ -7,8 +7,8 @@
 3. [Running SnapHiC](#running-snaphic)
 4. [Output files](#the-output-file)
 5. [Testing SnapHiC](#testing-snaphic)
-6. [Recommendations for parallel setting](#recommendations-for-parallel-setting)
-7. [More details on runninng SnapHiC](#more-detail-on-running-snaphic)
+6. [Recommendations for parallel computing](#recommendations-for-parallel-computing)
+7. [More details on running SnapHiC](#more-detail-on-running-snaphic)
 8. [Contact us](#contact-us)
 
 <h3 id=installation>1. Installation</h3>
@@ -76,7 +76,7 @@ To test SnapHiC, please download this sample dataset [here](http://renlab.sdsc.e
 
 After downloading this sample dataset [here](http://renlab.sdsc.edu/abnousa/snapHiC/test/input/Ecker/ODC_100.tar.gz) (1.2GB), untar it to generate 100 contact files, each containing the contacts for one cell. Run files for this sample dataset are in the *test_run_scripts* directory. You can set the input and output directories, load the required modules, and submit the run files.
 
-<h3 id=recommendations-for-parallel-setting>6. Recommendations for parallel setting</h3>
+<h3 id=recommendations-for-parallel-computing>6. Recommendations for parallel computing</h3>
 
 You can use as many processors as possible for the first two steps ('bin' and 'rwr'), as long as each processor has sufficient memory. For 10Kb bin resolution, we recommend 30-40GB of memory per processor. The remaining three steps ('hic', 'interaction' and 'postprocess') are performed for each chromosome separately. Therefore, we recommend using as many processors as the number of chromosomes in the genome. Providing sufficient memory for each processor for the remaining three steps is important. For 2Mb maximal genomic distance, 10Kb bin resolution, and for human and mouse genome, we recommend providing 20GB of memory per processor. We recommend using less than five processors per node. Here are the settings we used in our study.  
 | genome | #cells | binsize | distance | run step | nodes | processors per node | memory per node | runtime |  
