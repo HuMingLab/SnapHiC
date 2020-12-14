@@ -92,7 +92,7 @@ You can use as many processors as possible for the first two steps ('bin' and 'r
  
 <h3 id=more-detail-on-running-snaphic>7. More details on running SnapHiC</h3>
 
-SnapHiC consists of five steps: (1) binning, (2) random walk with restart (RWR) computation, (3) combining cells, (4) computation of local background, and (5) postprocessing. You can specify which step or steps you want to run as a command line argument. To specify the steps, you can use the argument `--step` followed by any of the five options: 'bin', 'rwr', 'hic', 'interaction', and 'postprocess'. If you don't specify any steps, SnapHiC will run all five steps. 
+SnapHiC consists of five steps: (1) binning, (2) imputing contact probability via random walk with restart (RWR), (3) combining all cells to generate .hic file, (4) identifying loop candidates based on both global and local background models, and (5) postprocessing of clusting nearby loop candidates and identifying loop summits. You can specify which step or steps you want to run as a command line argument. To specify the steps, you can use the argument `--step` followed by any of the five options: 'bin', 'rwr', 'hic', 'interaction', and 'postprocess'. If you don't specify any steps, SnapHiC will run all five steps. 
 
 We strongly recommend running SnapHiC in the following two parts, which are described in the run files. 
 
