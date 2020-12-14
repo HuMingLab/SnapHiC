@@ -110,7 +110,7 @@ First of all, when scHi-C dataset consists of a large number of cells, user can 
 
 In case user runs out of memory and suspects that some of the RWR computations might be corrupted, user can use the script (utils/validate_rwr.py) to assess whether RWR computation finished successfully in all cells. The input of the **validate_rwr.py** script is the output directory of the SnapHiC run. Please use command: `python utils/validate_rwr.py /path/to/output/of/your/run`. This script can generate a file named **missing.txt** in the <output>/rwr directory, which contains the name of RWR chromosomes/cells in which the RWR computation is corrupted. User can delete these files and restart the RWR step in SnapHiC.
 
-In addition, for steps 3 and 4, user need to provide sufficient memory per processor. If scHi-C dataset contains more than 100 cells, we recommend using 1, 2, or 3 processors per node for a node with ~120GB memory. By breaking down the computation into these two parts, user can optimally adjust the memory and processor per node according to the HPC resource and the number of cells in scHi-C dataset.  
+In addition, for steps 3 and 4, user need to provide sufficient memory per processor. If scHi-C dataset contains more than 100 cells, we recommend using 1, 2, or 3 processors per node for a node with ~120GB of memory. By breaking down the computation into these two parts, user can optimally adjust the memory and processor per node according to the HPC resource and the number of cells in scHi-C dataset.  
 
 Additional arguments that can be used, which can be found by *python snap.py --help*. 
 
