@@ -122,6 +122,7 @@ Additional arguments that can be used, which can be found by *python snap.py --h
 For any questions, comments and suggestions regarding SnapHiC, please submit an issue to Github with the details of your system and run. You can also send email to Armen Abnousi (<a.abnousi@gmail.com>) or Ming Hu (<hum@ccf.org>).
 
 <h3 id=citation>9. Citation</h3>
-If you use SnapHiC, please cite our pre-print at bioRxiv [here](https://www.biorxiv.org/content/10.1101/2020.12.13.422543v1):
+
+If you use SnapHiC, please cite our pre-print at bioRxiv: https://www.biorxiv.org/content/10.1101/2020.12.13.422543v1.
 
 Miao Yu, Armen Abnousi, Yanxiao Zhang, Guoqiang Li, Lindsay Lee, Ziyin Chen, Rongxin Fang, Jia Wen, Quan Sun, Yun Li, Bing Ren and Ming Hu (2020). SnapHiC: a computational pipeline to map chromatin contacts from single cell Hi-C data. doi: https://doi.org/10.1101/2020.12.13.422543. 
