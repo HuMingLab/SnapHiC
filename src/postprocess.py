@@ -260,7 +260,7 @@ def find_candidates_integer(indir, outdir, proc_chroms, chrom_lens, fdr_thresh, 
         results.to_csv(os.path.join(outdir, ".".join(["candidates", chrom, "bedpe"])), sep = "\t", index = False)
  
 def combine_postprocessed_chroms(directory, prefix):
-    prefix = prefix if prefix else combined
+    prefix = prefix if prefix else "combined"
     output_filename_temp = os.path.join(directory, "combined.postprocessed.bedpe.temp")
     output_filename = os.path.join(directory, f"{prefix}.postprocessed.all_candidates.bedpe")
     input_filepattern = directory + '/clustered.candidates.*.bedpe'
