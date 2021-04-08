@@ -7,7 +7,7 @@ Use the following command to run the script:
 ```python  
 python normalize_imputed_matrices.py -i <input_filename> -o <output_directory> -t <input_filetype> -b <binsize> -d <distance>
 ```  
-Default *distance* and *binsize* values used in SnapHiC are 2e6 and 1e4. The *input_filetype* can be either of "hdf5", "bedpe", or "npz".
+In SnapHiC default, *binsize* and *distance* values are 1e4 and 2e6, respectively. The *input_filetype* can be either of "hdf5", "bedpe", or "npz".
 
 The npz files are numpy files stored in the binary format.  
 
