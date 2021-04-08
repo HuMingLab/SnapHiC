@@ -1,6 +1,8 @@
 ## Apply alternative methods to impute scHi-C contact freqency 
 By default, SnapHiC uses random walk with restart (RWR) algorithm to impute 10Kb bin resolution contact frequency for each single cell. Users can apply alternative methods, such as Higashi (https://github.com/ma-compbio/Higashi), to impute scHi-C data, and use the script *normalize_imputed_matrices.py* to calculate the normalized contact freqeuncy (i.e., Z-score normalization and outlier trimming proposed by SnapHiC).
 
+In the current version of SnapHiC, parameters are optimized based on the RWR-imputed single cell contact frequency. If users apply altnerative imputation methods, we recommend to test different SnapHiC parameters to obtain optimal performance.  
+
 Use the following command to run the script:  
 ```python  
 python normalize_imputed_matrices.py -i <input_filename> -o <output_directory> -t <input_filetype> -b <binsize> -d <distance>
