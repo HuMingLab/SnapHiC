@@ -74,7 +74,8 @@ def main():
                             normalize = True, n_proc = n_proc, rank = rank, genome = args.genome, \
                             filter_file = None, parallel = False, rwr_logfile = rwr_logfile, \
                             rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger, \
-                            keep_rwr_matrix = args.keep_rwr_matrix)
+                            keep_rwr_matrix = args.keep_rwr_matrix, rwr_method = args.rwr_method, 
+                            blin_partitions = args.blin_partitions, max_iter = args.max_iter)
             rwr_logfile.close()
         elif parallel_mode == 'parallel':
             parallel_properties['comm'].Barrier()
@@ -87,7 +88,8 @@ def main():
                             normalize = True, n_proc = n_proc, rank = rank, genome = args.genome, \
                             filter_file = None, parallel = True, rwr_logfile = rwr_logfile, \
                             rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger, \
-                            keep_rwr_matrix = args.keep_rwr_matrix)
+                            keep_rwr_matrix = args.keep_rwr_matrix, rwr_method = args.rwr_method, 
+                            blin_partitions = args.blin_partitions, max_iter = args.max_iter)
             #print(rank, 'waiting for other processes')
             rwr_logfile.Close()
             parallel_properties['comm'].Barrier()
@@ -99,7 +101,8 @@ def main():
             threaded_lock = m.Lock()
             params = [(bin_dir, rwr_dir, args.binsize, args.alpha, args.dist, chrom_dict, \
                       True, n_proc, i, args.genome, None, False, rwr_logfile, \
-                      rwr_logfilename, threaded_lock, logger, args.keep_rwr_matrix) for i in range(n_proc)]
+                      rwr_logfilename, threaded_lock, logger, args.keep_rwr_matrix, \
+                      args.rwr_method, args.blin_partitions, args.max_iter) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
                 pool.starmap(get_rwr_for_all, params)
             #rwr_logfile.close()
@@ -355,6 +358,12 @@ def create_parser():
                         help = "biggest chromosome number to consider in genome, for example 22 for hg", default = -1)
     parser.add_argument('--prefix', action = 'store', required = False, default = None,
                         help = "a prefix that will be added to the name of the final output files")
+    parser.add_argument('--rwr-method', action = "store", required = False, default = "inverse",
+                        help = "method used for RWR computation: inverse, iterative, blin, nblin")
+    parser.add_argument('--blin-partitions' , action = 'store', required = False, default = 100,
+                        help = "number of METIS paritions if blin method for RWR is used.", type = int)
+    parser.add_argument('--max-iter', action = 'store', required = False, type = int, default = 30,
+                        help = 'maximum number of iterations if iterative method for RWR is used.')
     return parser
     
 

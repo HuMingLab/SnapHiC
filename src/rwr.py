@@ -9,6 +9,7 @@ import sys
 import random
 from collections import deque
 import gc
+import metispy
 #import dask
 #import dask.array
 #import scikits.umfpack
@@ -27,8 +28,10 @@ edge_filename = "/Users/abnousa/data/single_cell/snap_hic/data/outputs/miao_mESC
 # In[3]:
 
 #@profile
-def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], \
-                                                alpha = ALPHA, final_try = False, logfile = None, parallel = False, threaded_lock = None):
+def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], \
+		chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], \
+                alpha = ALPHA, final_try = False, logfile = None, parallel = False, \
+		threaded_lock = None, method = "inverse", max_iter = None, blin_partitions = 100):
     gc.collect()
     setname = edge_filename[(edge_filename.rfind('/') + 1):]
     #print('computing rwr for', setname, chrom)
@@ -47,14 +50,31 @@ def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM
     del edgelist
     #print('getting stoc matrix', setname, chrom)
     #sys.stdout.flush()
-    g = get_stochastic_matrix_from_edgelist(edges)
+    ##g = get_stochastic_matrix_from_edgelist(edges)
     #print('matrix returned', setname, chrom)
     #sys.stdout.flush()
-    gc.collect()
+    ##gc.collect()
     #print('solving rwr', setname, chrom)
     #sys.stdout.flush()
     msg = f'solved equation for {chrom} {setname}\n'
-    r = solve_rwr_en(g, alpha, final_try, setname, chrom)
+    if method == "inverse":
+        g = get_stochastic_matrix_from_edgelist(edges)
+        r = solve_rwr_inverse(g, alpha, final_try, setname, chrom)
+    elif method == "iterative":
+        g = get_stochastic_matrix_from_edgelist(edges)
+        r = solve_rwr_iterative(g, alpha, final_try, setname, chrom, max_iter = max_iter)
+    elif method == "nblin":
+        g = get_laplacian_matrix_from_edgelist(edges)
+        r = solve_rwr_nblin(g, alpha, final_try, setname, chrom)
+    elif method == "blin":
+        g = get_laplacian_matrix_from_edgelist(edges)
+        r = solve_rwr_blin(g, alpha, final_try, setname, chrom, num_parts = blin_partitions, only_q1 = False)
+    elif method == "q1":
+        #g = get_laplacian_matrix_from_edgelist(edges)
+        g = get_stochastic_matrix_from_edgelist(edges)
+        r = solve_rwr_blin(g, alpha, final_try, setname, chrom, num_parts = blin_partitions, only_q1 = True)
+    else:
+        raise Exception("Unrecognized RWR method")
     if logfile and parallel:
         logfile.Write_shared(msg.encode('utf-8'))
         logfile.Sync()
@@ -91,81 +111,41 @@ def get_stochastic_matrix_from_edgelist(edgelist):
     del g, degrees
     return m
 
+def get_laplacian_matrix_from_edgelist(edgelist):
+    g = nx.from_pandas_edgelist(edgelist, source = 'x1', target = 'y1', edge_attr = ['weight'], create_using = nx.Graph())
+    degrees = 1/np.array([g.degree(i) for i in g.nodes()])
+    degrees = sp.sparse.diags(degrees, shape = (degrees.shape[0], degrees.shape[0]))
+    print("deg", degrees.shape)
+    m = sp.sparse.csc_matrix(nx.adjacency_matrix(g).astype(float))
+    degrees = np.sqrt(degrees)
+    m = degrees @ m @ degrees
+    del degrees
+    return m
 
-def solve_rwr_en(stoch_matrix, alpha = ALPHA, final_try = False, setname = None, chrom = None):
+def solve_rwr_inverse(stoch_matrix, alpha = ALPHA, final_try = False, setname = None, chrom = None):
     gc.collect()
-    #print('first', setname, chrom); sys.stdout.flush()
     m = stoch_matrix*(1-alpha)
-    #print('second', setname, chrom)
-    #sys.stdout.flush()
     m = m.transpose()
-    #print('thhird', setname, chrom); sys.stdout.flush()
     y = sp.sparse.spdiags([1] * m.shape[0], 0, m.shape[0], m.shape[0], format = "csc")
-    #print('fifth', setname, chrom); sys.stdout.flush()
     A = y - m
-    #print('trying', setname, chrom)
-    #sys.stdout.flush()
-    #try:
-    #    s = None
-    #    #s = sp.sparse.linalg.spsolve(A, y)
-    #    s = scikits.umfpack.spsolve(A, y)
-    #    if isinstance(s, np.ndarray):
-    #        s = sp.sparse.csr_matrix(s)
-    #    #print('s first try', setname, chrom)
-    #    #sys.stdout.flush()
-    #except:
-    #    #print('attempting to delete', setname, chrom)
-    #    #sys.stdout.flush()
-    #    if s is not None:
-    #        del s
-    #    #print("sparse solver failed. trying dense solver.")
-    #    #sys.stdout.flush()
-    #    gc.collect()
     try:
         s = None
-        #print('second try', setname, chrom)
-        #sys.stdout.flush()
-        #A = A.todense()
-        #A = dask.array.from_array(A.todense())
         A = A.todense()
-        #print('have a', setname, chrom)
         y = y.todense()
-        #y = dask.array.from_array(y.todense())
-        #print('have y', setname, chrom, A.shape, y.shape)
         s = sp.linalg.solve(A, y)
-        #s = dask.array.linalg.solve(A, y)
-        #print('working on s', setname, chrom)
-        #print('type1', type(s))
-        #s = s.compute()
-        #print('type2', type(s))
-        #s = sp.sparse.csr_matrix(s)
-        #print('s on second try;', setname, chrom)
-        #sys.stdout.flush()
     except Exception as e:
-        #print(e, setname, chrom)
-        #print('attempting to delete in second', setname, chrom)
-        #sys.stdout.flush()
         if A is not None:
             del A
         if y is not None:
             del y
         if s is not None:
             del s
-        #print('dense solver failed too. will retry later?', setname, chrom)
-        #sys.stdout.flush()
         if final_try:
-            #print('was final try', setname, chrom)
             gc.collect()
-            #print('raising exception', setname, chrom)
-            #sys.stdout.flush()
             raise Exception("Cannot allocate enough memory of solving RWR")
         else:
-            #print('returning string', setname, chrom);sys.stdout.flush()
-            #gc.collect()
             return "try_later"
     ##############
-    #print('finalizing s', setname, chrom)
-    #sys.stdout.flush()
     s *= alpha
     s += s.transpose()
     if y is not None:
@@ -174,9 +154,124 @@ def solve_rwr_en(stoch_matrix, alpha = ALPHA, final_try = False, setname = None,
         del A
     if m is not None:
         del m
-    #del m, y, A
     return s
 
+def solve_rwr_iterative(stoch_matrix, alpha = ALPHA, final_try = False, setname = None, chrom = None, max_iter = None):
+    max_iter = max_iter if max_iter else float("inf")
+    gc.collect()
+    m = stoch_matrix
+    y = sp.sparse.spdiags([1] * m.shape[0], 0, m.shape[0], m.shape[0], format = "csc")
+    s = y
+    delta = float("inf")
+    A = y
+    #print(m.todense()[:4,:4])
+    counter = 0
+    while delta > 1e-6 and counter < max_iter:
+        print(delta, counter)
+        counter += 1
+        Aold = A.copy()
+        A = (1-alpha) * m * Aold + (alpha) * y
+        delta = (abs(A - Aold)).max()
+    #print(delta)
+    A += A.transpose()
+    return A
+
+def solve_rwr_nblin(stoch_matrix, alpha = ALPHA, final_try = False, setname = None, chrom = None):
+    gc.collect()
+    m = stoch_matrix
+    y = sp.sparse.spdiags([1] * m.shape[0], 0, m.shape[0], m.shape[0], format = "csc")
+
+    #svd decomposition
+    U, s,  V = sp.linalg.svd(m.todense())
+
+    #eigenvalue decompositionn
+    #s, U = sp.linalg.eig(m.todense())
+    #V = np.transpose(U)
+
+    s = sp.sparse.spdiags(s, 0, m.shape[0], m.shape[0], format = "csc").todense()
+    lmd = sp.linalg.inv(sp.linalg.inv(s) - (1 - alpha) * V @ U)
+    A = (alpha) * (y + (1 - alpha) * U @ lmd @ V)
+
+    #if eigenvalue decompose, might not need these lines:
+    A = A / np.sum(A, axis = 0)
+    A += A.transpose()
+    return A
+
+def solve_rwr_blin(stoch_matrix, alpha = ALPHA, final_try = False, setname = None, chrom = None, num_parts = None, only_q1 = False):
+    num_parts = num_parts if num_parts else 100
+    parts = get_partitions(stoch_matrix, num_parts)
+    ordering, rev_ordering = get_orders(parts)
+    stoch_matrix = stoch_matrix[:, ordering]
+    q1 = construct_q1(stoch_matrix, parts, 1-alpha)
+    if only_q1:
+        res = q1
+    else:
+        w2 = construct_w2(stoch_matrix, parts)
+        U, s, V = sp.linalg.svd(w2)
+        s = sp.sparse.spdiags(s, 0, stoch_matrix.shape[0], stoch_matrix.shape[0], format = "csc").todense()
+        lmd = np.linalg.inv(np.linalg.inv(s) - (1 - alpha) * V @ q1 @ U)
+        res = (alpha)*(q1 + (1 - alpha) * q1 @ U @ lmd @ V @ q1)
+    res += res.transpose()
+    res = res[:, rev_ordering]
+    return res
+
+def get_partitions(adj_matrix, k):
+    g = nx.from_numpy_matrix(adj_matrix.todense())  
+    cost, parts = metispy.part_graph(g, k)
+    ps  =  {}
+    counter = 0
+    for i in parts:
+        if i in ps:
+            continue
+        else:
+            ps[i] = counter
+            counter += 1
+    l = []
+    for i in parts:
+        l.append(ps[i])
+    return l
+
+def construct_q1(m, parts, alpha):
+    q1 =  np.zeros(shape = m.shape)
+    parts = np.array(parts)
+    m = m.todense()
+    for i in range(max(parts) + 1):
+        nodes = list(np.where(parts == i)[0])
+        start = min(nodes)
+        end = max(nodes) + 1
+        submat = m[start:end, start:end]
+        I = np.eye(submat.shape[0])
+        q1[start:end, start:end] = np.linalg.inv(I - alpha * submat)
+    return q1
+
+def construct_w2(m, parts):
+    w2 =  np.zeros(shape = m.shape)
+    parts = np.array(parts)
+    m = m.todense()
+    for i in range(max(parts) + 1):
+        nodes = list(np.where(parts == i)[0])
+        start = min(nodes)
+        end = max(nodes) + 1
+        w2[start:end, :start] = m[start:end, :start]
+        w2[start:end, end:] = m[start:end, end:]
+        w2[:start, start:end] = m[:start, start:end]
+        w2[end:, start:end] = m[end:, start:end]
+    return w2
+
+def get_orders(parts):
+    parts = np.array(parts)
+    ordering = np.zeros(len(parts))
+    rev_ordering = np.zeros(len(parts))
+    column_counter = 0
+    for part_id in range(len(set(parts))):
+        group_members = np.where(parts == part_id)[0]
+        for column in group_members:
+            ordering[column_counter] = column
+            rev_ordering[column] = column_counter
+            column_counter += 1
+    rev_ordering = np.array(rev_ordering, dtype = np.int)
+    ordering = np.array(ordering, dtype = np.int)
+    return ordering, rev_ordering
 
 def reformat_sparse_matrix(m, binsize, distance):
     max_bin_distance = distance // binsize
@@ -364,7 +459,7 @@ def keep_eligible_distance(d, dist, binsize):
 def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, 
                 normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None, parallel = False, 
                                 rwr_logfile = None, rwr_logfilename = None, threaded_lock = None, logger = None,
-                                 keep_rwr_matrix = False):
+                                 keep_rwr_matrix = False, rwr_method = "inverse", blin_partitions = 100, max_iter = 100):
     if logger:
         logger.set_rank(rank)
     if not outdir:
@@ -413,7 +508,8 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
             #print('calling rwr for set')
             #sys.stdout.flush()
             d = get_rwr_en(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], 
-                alpha = alpha, logfile = rwr_logfile, parallel = parallel, threaded_lock = threaded_lock)
+                alpha = alpha, logfile = rwr_logfile, parallel = parallel, threaded_lock = threaded_lock, method = rwr_method,
+                max_iter = max_iter, blin_partitions = blin_partitions)
             last_bin = chrom_lens[chrom] // binsize
             if isinstance(d, str) and d == "try_later":
                 logger.write(f'\tprocessor {rank}: processing of {setname} {chrom} failed, likely due to lack of memory. ' +\

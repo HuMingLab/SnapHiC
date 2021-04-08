@@ -8,9 +8,10 @@
 4. [Output files](#the-output-file)
 5. [Testing SnapHiC](#testing-snaphic)
 6. [Recommendations for parallel computing](#recommendations-for-parallel-computing)
-7. [More details on running SnapHiC](#more-detail-on-running-snaphic)
-8. [Contact us](#contact-us)
-9. [Citation](#citation)
+7. Running for different resolutions
+8. [More details on running SnapHiC](#more-detail-on-running-snaphic)
+9. [Contact us](#contact-us)
+10. [Citation](#citation)
 
 <h3 id=installation>1. Installation</h3>
 
@@ -92,8 +93,12 @@ You can use as many processors as possible for the first two steps ('bin' and 'r
 | mm10 | 300 | 10KB | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 1.8 hrs |  
 | mm10 | 400 | 10KB | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 18.4 hrs |  
 | mm10 | 400 | 10KB | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 2.4 hrs |  
+
+<h3 id=more-detail-on-running-snaphic>7. Running for different resolutions </h3> 
+
+In order to run the SnapHiC algorithm for other binsizes, we provide the filter regions and chromosome sizes files for 20kb, and 25kb resolutions in the "ext" directory. The user should direct to correct *filter regions* files and the *chromosome sizes* files in the run files. The user should also specify the resolution with the *binsize* argument when running the SnapHiC (e.g. --binsize 20000).  
  
-<h3 id=more-detail-on-running-snaphic>7. More details on running SnapHiC</h3>
+<h3 id=more-detail-on-running-snaphic>8. More details on running SnapHiC</h3>
 
 SnapHiC consists of five steps: (1) binning, (2) imputing contact probability via random walk with restart (RWR), (3) combining all cells to generate .hic file, (4) identifying loop candidates based on both global and local background models, and (5) postprocessing: clustering nearby loop candidates and identifying loop summits. User can specify which step or steps to run as a command line argument. To specify the steps, use the argument `--step` followed by any of the five options: 'bin', 'rwr', 'hic', 'interaction', and 'postprocess'. If user don't specify any steps, SnapHiC will run all five steps. 
 
@@ -117,11 +122,12 @@ In addition, for steps 3 and 4, we recommend providing at least 20GB of memory p
  
 Additional arguments that can be used, which can be found by *python snap.py --help*. 
 
-<h3 id=contact-us>8. Contact us</h3>
+
+<h3 id=contact-us>9. Contact us</h3>
 
 For any questions, comments and suggestions regarding SnapHiC, please submit an issue to Github with the details of your system and run. You can also send email to Armen Abnousi (<a.abnousi@gmail.com>) or Ming Hu (<hum@ccf.org>).
 
-<h3 id=citation>9. Citation</h3>
+<h3 id=citation>10. Citation</h3>
 
 If you use SnapHiC, please cite our pre-print at bioRxiv: https://www.biorxiv.org/content/10.1101/2020.12.13.422543v1.
 

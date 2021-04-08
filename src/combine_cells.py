@@ -26,7 +26,7 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
     cells_data = hdf_file.create_dataset(chrom, chunks = (100000, len(input_filenames)), shape = (0, len(input_filenames)), \
                                                maxshape = (None, len(input_filenames)))        
 
-    batch_size = 50
+    batch_size = 20
     for i, batch_start in enumerate(range(0, len(input_filenames), batch_size)):
         logger.write(f'\tprocessor {rank}: combining batch {i} for {chrom}', verbose_level = 3, \
                          append_time = False, allow_all_ranks = True)
@@ -41,7 +41,11 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
         #print("fope2");sys.stdout.flush();
         command = 'eval paste $(for i in ${fnames=' + ' '.join(batch_files) + '}; do echo -n "<(cut -f7 $i) "; done)';
         #print("fope3");sys.stdout.flush();
-        subprocess.check_call(command, stdout = output_file, shell = True, executable = "/bin/bash");
+        try:
+            subprocess.check_call(command, stdout = output_file, stderr = subprocess.PIPE, shell = True, executable = "/bin/bash");
+        except subprocess.CalledProcessError as e:
+            sys.stderr.write(e.stderr)
+            sys.exit(1)
         #print("fope4");sys.stdout.flush();
         output_file.close();
         #print("fope5");sys.stdout.flush();
@@ -106,6 +110,7 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
     hic_format.loc[:,'frag1'] = 0
     hic_format.loc[:,'frag2'] = 1
     hic_format = hic_format[['str1', 'chr1', 'x1', 'frag1','str2', 'chr2', 'y1', 'frag2', 'score']]
+    hic_format = hic_format[hic_format['score'] > 0]
     hic_format.to_csv(output_filename + ".hic.input", index = False, header = None, sep = "\t")
     
 def get_proc_chroms(chrom_lens, rank, n_proc):
