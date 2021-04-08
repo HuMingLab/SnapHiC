@@ -8,7 +8,7 @@
 4. [Output files](#the-output-file)
 5. [Testing SnapHiC](#testing-snaphic)
 6. [Recommendations for parallel computing](#recommendations-for-parallel-computing)
-7. Running for different resolutions
+7. [Running for different resolutions](#running-different-resolutions)
 8. [More details on running SnapHiC](#more-detail-on-running-snaphic)
 9. [Contact us](#contact-us)
 10. [Citation](#citation)
@@ -94,7 +94,7 @@ You can use as many processors as possible for the first two steps ('bin' and 'r
 | mm10 | 400 | 10KB | 1Mb | 1 (bin rwr) | 15 | 3 | 96GB | 18.4 hrs |  
 | mm10 | 400 | 10KB | 1Mb | 2 (hic inter. postproc.) | 10 | 2 | 96GB | 2.4 hrs |  
 
-<h3 id=more-detail-on-running-snaphic>7. Running for different resolutions </h3> 
+<h3 id=running-different-resolutions>7. Running for different resolutions </h3> 
 
 In order to run the SnapHiC algorithm for other binsizes, we provide the filter regions and chromosome sizes files for 20kb, and 25kb resolutions in the "ext" directory. The user should direct to correct *filter regions* files and the *chromosome sizes* files in the run files. The user should also specify the resolution with the *binsize* argument when running the SnapHiC (e.g. --binsize 20000).  
  
