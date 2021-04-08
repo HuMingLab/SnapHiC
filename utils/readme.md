@@ -1,7 +1,7 @@
 ## Applying alternative methods to impute single cell contact frequency 
-By default, SnapHiC uses the random walk with restart (RWR) algorithm to impute 10Kb bin resolution contact frequency for each single cell. Users can apply alternative methods, such as Higashi (https://github.com/ma-compbio/Higashi), to impute scHi-C data, and use the script *normalize_imputed_matrices.py* to calculate the normalized contact freqeuncy (i.e., Z-score normalization and outlier trimming proposed by SnapHiC).
+By default, SnapHiC uses the random walk with restart (RWR) algorithm to impute 10Kb bin resolution contact frequency for each single cell. Users can apply alternative methods, such as Higashi (https://github.com/ma-compbio/Higashi), to impute scHi-C data, and use the script *normalize_imputed_matrices.py* to calculate the normalized contact frequency (i.e., Z-score normalization and outlier trimming proposed by SnapHiC).
 
-In the current version (v0.1.0), SnapHiC parameters are optimized based on the RWR-imputed single cell contact frequency. If users apply altnerative imputation methods, we recommend to test different SnapHiC parameters to obtain optimal loop calling results.  
+In the current version (v0.1.0), SnapHiC parameters are optimized based on the RWR-imputed single cell contact frequency. If users apply alternative imputation methods, we recommend to test different SnapHiC parameters to obtain optimal loop calling results.  
 
 Use the following command to run the script:  
 ```python  
@@ -11,7 +11,7 @@ In SnapHiC default, *binsize* and *distance* values are 1e4 and 2e6, respectivel
 
 The npz files are numpy files stored in the binary format.  
 
-The bedpe files should contain contact frequency in the upper triangular of the scHi-C contact matrix, i.e. the second bin coordinate should be larger than the first bin coordinate. These bedpe files should include all intra-chromosomal bin pairs within the pre-specificed 1D genomic distance range (2Mb by default), even if the imputed contact frequency is 0. The matrix size is determined by the maximal value of the second bin coordinate in the bedpe file.
+The bedpe files should contain contact frequency in the upper triangular of the scHi-C contact matrix, i.e. the second bin coordinate should be larger than the first bin coordinate. These bedpe files should include all intra-chromosomal bin pairs within the pre-specified 1D genomic distance range (2Mb by default), even if the imputed contact frequency is 0. The matrix size is determined by the maximal value of the second bin coordinate in the bedpe file.
 
 The hdf files should follow the output format described by Higashi (https://github.com/ma-compbio/Higashi). Specifically, they should contain one dataset called "coordinates" storing the X and Y coordinates for all the cells. For each cell, there should be a separate dataset in the same file. These additional datasets are named as "cell_i" where i is an integer number (cell_0, cell_1, etc.). Each of the "cell_i" datasets contains one vector of the imputed contact frequency, which is matched with the coordinates in the "coordinates" dataset.  
 
