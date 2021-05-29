@@ -163,8 +163,8 @@ def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index,
     small_neighborhood_counts = np.sum(~np.isnan(small_neighborhood), axis = -1)
 
     #sum on the last axis (sum of neighbors)
-    big_neighborhood = big_neighborhood.sum(axis = -1)
-    small_neighborhood = small_neighborhood.sum(axis = -1)
+    big_neighborhood = np.nansum(big_neighborhood, axis = -1)
+    small_neighborhood = np.nansum(small_neighborhood, axis = -1)
     
     #remove edge cases that are used only as neighbors
     trim_size = upper_limit - lower_limit
