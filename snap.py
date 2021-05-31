@@ -75,7 +75,8 @@ def main():
                             filter_file = None, parallel = False, rwr_logfile = rwr_logfile, \
                             rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger, \
                             keep_rwr_matrix = args.keep_rwr_matrix, rwr_method = args.rwr_method, 
-                            blin_partitions = args.blin_partitions, max_iter = args.max_iter)
+                            blin_partitions = args.blin_partitions, max_iter = args.max_iter, 
+                            rwr_window_size = args.rwr_window_size, rwr_step_size = args.rwr_step_size)
             rwr_logfile.close()
         elif parallel_mode == 'parallel':
             parallel_properties['comm'].Barrier()
@@ -89,7 +90,8 @@ def main():
                             filter_file = None, parallel = True, rwr_logfile = rwr_logfile, \
                             rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger, \
                             keep_rwr_matrix = args.keep_rwr_matrix, rwr_method = args.rwr_method, 
-                            blin_partitions = args.blin_partitions, max_iter = args.max_iter)
+                            blin_partitions = args.blin_partitions, max_iter = args.max_iter,
+                            rwr_window_size = args.rwr_window_size, rwr_step_size = args.rwr_step_size)
             #print(rank, 'waiting for other processes')
             rwr_logfile.Close()
             parallel_properties['comm'].Barrier()
@@ -102,7 +104,8 @@ def main():
             params = [(bin_dir, rwr_dir, args.binsize, args.alpha, args.dist, chrom_dict, \
                       True, n_proc, i, args.genome, None, False, rwr_logfile, \
                       rwr_logfilename, threaded_lock, logger, args.keep_rwr_matrix, \
-                      args.rwr_method, args.blin_partitions, args.max_iter) for i in range(n_proc)]
+                      args.rwr_method, args.blin_partitions, args.max_iter,
+                      args.rwr_window_size, args.rwr_step_size) for i in range(n_proc)]
             with multiprocessing.Pool(n_proc) as pool:
                 pool.starmap(get_rwr_for_all, params)
             #rwr_logfile.close()
@@ -364,6 +367,10 @@ def create_parser():
                         help = "number of METIS paritions if blin method for RWR is used.", type = int)
     parser.add_argument('--max-iter', action = 'store', required = False, type = int, default = 30,
                         help = 'maximum number of iterations if iterative method for RWR is used.')
+    parser.add_argument('--rwr-window-size', action = 'store', required = False, type = int, default = 200,
+                        help = "number of adjacent binpairs in each row of the sliding window used in RWR computation (if sliding window method is chosen)")
+    parser.add_argument('--rwr-step-size', action = 'store', required = False, type = int, default = 100,
+                        help = "number of adjacent binpairs on the diagonal of the sliding window that will be skipped in each consecutive step (if sliding window method is chosen")
     return parser
     
 

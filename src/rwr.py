@@ -31,7 +31,8 @@ edge_filename = "/Users/abnousa/data/single_cell/snap_hic/data/outputs/miao_mESC
 def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM_DICT.keys())[0], \
 		chrom_len = CHROM_DICT[list(CHROM_DICT.keys())[0]], \
                 alpha = ALPHA, final_try = False, logfile = None, parallel = False, \
-		threaded_lock = None, method = "inverse", max_iter = None, blin_partitions = 100):
+		threaded_lock = None, method = "inverse", max_iter = None, blin_partitions = 100,
+                rwr_window_size = 200, rwr_step_size = 100):
     gc.collect()
     setname = edge_filename[(edge_filename.rfind('/') + 1):]
     #print('computing rwr for', setname, chrom)
@@ -42,12 +43,8 @@ def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM
     NUM = int(np.ceil(chrom_len / binsize))
     #print('NUM', NUM)
     
-    edges = pd.DataFrame({'x1':list(range(0, NUM-1)), 'y1':list(range(1, NUM))})
-    edges = pd.concat([edges, edgelist[['x1', 'y1']]], axis = 0)
-    edges.loc[:,'weight'] = 1
     #print('deleting edgelist', setname, chrom)
     #sys.stdout.flush()
-    del edgelist
     #print('getting stoc matrix', setname, chrom)
     #sys.stdout.flush()
     ##g = get_stochastic_matrix_from_edgelist(edges)
@@ -57,24 +54,55 @@ def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM
     #print('solving rwr', setname, chrom)
     #sys.stdout.flush()
     msg = f'solved equation for {chrom} {setname}\n'
-    if method == "inverse":
-        g = get_stochastic_matrix_from_edgelist(edges)
-        r = solve_rwr_inverse(g, alpha, final_try, setname, chrom)
-    elif method == "iterative":
-        g = get_stochastic_matrix_from_edgelist(edges)
-        r = solve_rwr_iterative(g, alpha, final_try, setname, chrom, max_iter = max_iter)
-    elif method == "nblin":
-        g = get_laplacian_matrix_from_edgelist(edges)
-        r = solve_rwr_nblin(g, alpha, final_try, setname, chrom)
-    elif method == "blin":
-        g = get_laplacian_matrix_from_edgelist(edges)
-        r = solve_rwr_blin(g, alpha, final_try, setname, chrom, num_parts = blin_partitions, only_q1 = False)
-    elif method == "q1":
-        #g = get_laplacian_matrix_from_edgelist(edges)
-        g = get_stochastic_matrix_from_edgelist(edges)
-        r = solve_rwr_blin(g, alpha, final_try, setname, chrom, num_parts = blin_partitions, only_q1 = True)
+    if method == "sliding_window":
+        r = sp.sparse.coo_matrix(((0,), ((0,), (0,))), shape = (NUM, NUM))
+        print("NUM", NUM)
+        for window_start in range(0, NUM + sliding_window_bin_count, sliding_window_step_size):
+            window_end = window_start + sliding_window_bin_count
+            print(window_start, window_end)
+            window_edges = edgelist[(edgelist['x1'] >= window_start) & (edgelist['y1'] < window_end)]
+            defaults = pd.DataFrame({'x1':list(range(window_start, min(NUM-1, window_end - 1))), 'y1': list(range(window_start+1, min(NUM, window_end)))})
+            print(defaults.shape, window_edges.shape)
+            if defaults.shape[0] == 0:
+                print("skipping", window_edges.head())
+                continue
+            edges = pd.concat([window_edges, defaults[['x1', 'y1']]], axis = 0)
+            edges.loc[:,'weight'] = 1
+            g = get_stochastic_matrix_from_edgelist(edges)
+            partial_r = solve_rwr_inverse(g, alpha, final_try, setname, chrom)
+            if isinstance(r, str):
+                break
+            partial_r = sp.sparse.coo_matrix(partial_r)
+            partial_r = pd.DataFrame({'i':partial_r.row, 'j': partial_r.col, 'v': partial_r.data})
+            partial_r = partial_r[(partial_r['i'] + partial_r['j'] > sliding_window_step_size) & (partial_r['i'] + partial_r['j'] < sliding_window_bin_count + sliding_window_step_size)]
+            partial_r = partial_r[(partial_r['j'] - partial_r['i'] < sliding_window_bin_count)]
+            partial_r['i'] += sliding_window_bin_count
+            partial_r['j'] += sliding_window_bin_count
+            partial_r = sp.sparse.coo_matrix((partial_r['v'], (partial_r['i'], partial_r['j'])), shape = (NUM, NUM))
+            r += partial_r
+        r = r.todense()
     else:
-        raise Exception("Unrecognized RWR method")
+        edges = pd.DataFrame({'x1':list(range(0, NUM-1)), 'y1':list(range(1, NUM))})
+        edges = pd.concat([edges, edgelist[['x1', 'y1']]], axis = 0)
+        edges.loc[:,'weight'] = 1
+        if method == "inverse":
+            g = get_stochastic_matrix_from_edgelist(edges)
+            r = solve_rwr_inverse(g, alpha, final_try, setname, chrom)
+        elif method == "iterative":
+            g = get_stochastic_matrix_from_edgelist(edges)
+            r = solve_rwr_iterative(g, alpha, final_try, setname, chrom, max_iter = max_iter)
+        elif method == "nblin":
+            g = get_laplacian_matrix_from_edgelist(edges)
+            r = solve_rwr_nblin(g, alpha, final_try, setname, chrom)
+        elif method == "blin":
+            g = get_laplacian_matrix_from_edgelist(edges)
+            r = solve_rwr_blin(g, alpha, final_try, setname, chrom, num_parts = blin_partitions, only_q1 = False)
+        elif method == "q1":
+            #g = get_laplacian_matrix_from_edgelist(edges)
+            g = get_stochastic_matrix_from_edgelist(edges)
+            r = solve_rwr_blin(g, alpha, final_try, setname, chrom, num_parts = blin_partitions, only_q1 = True)
+        else:
+            raise Exception("Unrecognized RWR method")
     if logfile and parallel:
         logfile.Write_shared(msg.encode('utf-8'))
         logfile.Sync()
@@ -459,7 +487,8 @@ def keep_eligible_distance(d, dist, binsize):
 def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, 
                 normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None, parallel = False, 
                                 rwr_logfile = None, rwr_logfilename = None, threaded_lock = None, logger = None,
-                                 keep_rwr_matrix = False, rwr_method = "inverse", blin_partitions = 100, max_iter = 100):
+                                 keep_rwr_matrix = False, rwr_method = "inverse", blin_partitions = 100, max_iter = 100,
+                                 rwr_window_size = 200, rwr_step_size = 100):
     if logger:
         logger.set_rank(rank)
     if not outdir:
@@ -509,7 +538,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
             #sys.stdout.flush()
             d = get_rwr_en(filepath, binsize = binsize, distance = dist, chrom = chrom, chrom_len = chrom_lens[chrom], 
                 alpha = alpha, logfile = rwr_logfile, parallel = parallel, threaded_lock = threaded_lock, method = rwr_method,
-                max_iter = max_iter, blin_partitions = blin_partitions)
+                max_iter = max_iter, blin_partitions = blin_partitions, rwr_window_size = rwr_window_size, rwr_step_size = rwr_step_size)
             last_bin = chrom_lens[chrom] // binsize
             if isinstance(d, str) and d == "try_later":
                 logger.write(f'\tprocessor {rank}: processing of {setname} {chrom} failed, likely due to lack of memory. ' +\
