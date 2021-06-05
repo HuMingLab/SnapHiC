@@ -57,8 +57,8 @@ def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM
     if method == "sliding_window":
         r = sp.sparse.coo_matrix(((0,), ((0,), (0,))), shape = (NUM, NUM))
         print("NUM", NUM)
-        for window_start in range(0, NUM + sliding_window_bin_count, sliding_window_step_size):
-            window_end = window_start + sliding_window_bin_count
+        for window_start in range(0, NUM + rwr_window_size, rwr_step_size):
+            window_end = window_start + rwr_window_size
             print(window_start, window_end)
             window_edges = edgelist[(edgelist['x1'] >= window_start) & (edgelist['y1'] < window_end)]
             defaults = pd.DataFrame({'x1':list(range(window_start, min(NUM-1, window_end - 1))), 'y1': list(range(window_start+1, min(NUM, window_end)))})
@@ -68,16 +68,21 @@ def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM
                 continue
             edges = pd.concat([window_edges, defaults[['x1', 'y1']]], axis = 0)
             edges.loc[:,'weight'] = 1
+            print("this is the partial input:")
+            print(edges.describe())
             g = get_stochastic_matrix_from_edgelist(edges)
             partial_r = solve_rwr_inverse(g, alpha, final_try, setname, chrom)
             if isinstance(r, str):
                 break
             partial_r = sp.sparse.coo_matrix(partial_r)
             partial_r = pd.DataFrame({'i':partial_r.row, 'j': partial_r.col, 'v': partial_r.data})
-            partial_r = partial_r[(partial_r['i'] + partial_r['j'] > sliding_window_step_size) & (partial_r['i'] + partial_r['j'] < sliding_window_bin_count + sliding_window_step_size)]
-            partial_r = partial_r[(partial_r['j'] - partial_r['i'] < sliding_window_bin_count)]
-            partial_r['i'] += sliding_window_bin_count
-            partial_r['j'] += sliding_window_bin_count
+            print("this is the partial output:")
+            print(partial_r.describe())
+            partial_r = partial_r[(partial_r['i'] + partial_r['j'] > rwr_step_size) & (partial_r['i'] + partial_r['j'] < rwr_window_size + rwr_step_size)]
+            #partial_r = partial_r[(partial_r['i'] + partial_r['j'] < rwr_window_size + rwr_step_size)]
+            partial_r = partial_r[(partial_r['j'] - partial_r['i'] < rwr_window_size)]
+            partial_r['i'] += window_start
+            partial_r['j'] += window_start
             partial_r = sp.sparse.coo_matrix((partial_r['v'], (partial_r['i'], partial_r['j'])), shape = (NUM, NUM))
             r += partial_r
         r = r.todense()
