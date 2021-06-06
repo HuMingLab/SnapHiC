@@ -9,7 +9,6 @@ import sys
 import random
 from collections import deque
 import gc
-import metispy
 #import dask
 #import dask.array
 #import scikits.umfpack
@@ -249,7 +248,8 @@ def solve_rwr_blin(stoch_matrix, alpha = ALPHA, final_try = False, setname = Non
     return res
 
 def get_partitions(adj_matrix, k):
-    g = nx.from_numpy_matrix(adj_matrix.todense())  
+    g = nx.from_numpy_matrix(adj_matrix.todense()) 
+    import metispy 
     cost, parts = metispy.part_graph(g, k)
     ps  =  {}
     counter = 0
