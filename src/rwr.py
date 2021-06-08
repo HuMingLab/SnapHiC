@@ -54,37 +54,42 @@ def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM
     #sys.stdout.flush()
     msg = f'solved equation for {chrom} {setname}\n'
     if method == "sliding_window":
-        r = sp.sparse.coo_matrix(((0,), ((0,), (0,))), shape = (NUM, NUM))
+        r = sp.sparse.coo_matrix(((0,), ((0,), (0,))), shape = (NUM, NUM)).todense()
+        #r = pd.DataFrame({'i':r.row, 'j': r.col, 'v': r.data})
         print("NUM", NUM)
         for window_start in range(0, NUM + rwr_window_size, rwr_step_size):
             window_end = window_start + rwr_window_size
-            print(window_start, window_end)
             window_edges = edgelist[(edgelist['x1'] >= window_start) & (edgelist['y1'] < window_end)]
             defaults = pd.DataFrame({'x1':list(range(window_start, min(NUM-1, window_end - 1))), 'y1': list(range(window_start+1, min(NUM, window_end)))})
-            print(defaults.shape, window_edges.shape)
             if defaults.shape[0] == 0:
                 print("skipping", window_edges.head())
                 continue
-            edges = pd.concat([window_edges, defaults[['x1', 'y1']]], axis = 0)
+            edges = pd.concat([defaults[['x1', 'y1']], window_edges[['x1', 'y1']]], axis = 0)
             edges.loc[:,'weight'] = 1
-            print("this is the partial input:")
-            print(edges.describe())
+            edges.to_csv("temp2.csv")
             g = get_stochastic_matrix_from_edgelist(edges)
             partial_r = solve_rwr_inverse(g, alpha, final_try, setname, chrom)
             if isinstance(r, str):
                 break
             partial_r = sp.sparse.coo_matrix(partial_r)
             partial_r = pd.DataFrame({'i':partial_r.row, 'j': partial_r.col, 'v': partial_r.data})
-            print("this is the partial output:")
-            print(partial_r.describe())
             partial_r = partial_r[(partial_r['i'] + partial_r['j'] > rwr_step_size) & (partial_r['i'] + partial_r['j'] < rwr_window_size + rwr_step_size)]
             #partial_r = partial_r[(partial_r['i'] + partial_r['j'] < rwr_window_size + rwr_step_size)]
             partial_r = partial_r[(partial_r['j'] - partial_r['i'] < rwr_window_size)]
+            print("this is the partial output:", window_start)
+            print(partial_r.describe())
+            print(partial_r.head())
             partial_r['i'] += window_start
             partial_r['j'] += window_start
+            #old_r = pd.merge(r, partial_r, on = ['i', 'j'], how = "outer", suffixes = ["", "_2"], indicator = True)
+            #old_r = old_r.loc[old_r['_merge'] == "left_only", ['i', 'j', 'v']]
+            #print("oldies:", old_r.shape)
+            #r = pd.concat([old_r, partial_r], axis = 0)
+            #print("newsies:", r.shape)
+            #r['v'] = r.v.where((temp_r['_merge'] in ["both", "right_only"]), temp_r['v_y'], temp_r['v_x']) 
+            r[partial_r['i'], partial_r['j']] = 0
             partial_r = sp.sparse.coo_matrix((partial_r['v'], (partial_r['i'], partial_r['j'])), shape = (NUM, NUM))
-            r += partial_r
-        r = r.todense()
+            r += partial_r 
     else:
         edges = pd.DataFrame({'x1':list(range(0, NUM-1)), 'y1':list(range(1, NUM))})
         edges = pd.concat([edges, edgelist[['x1', 'y1']]], axis = 0)
