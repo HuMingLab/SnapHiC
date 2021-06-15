@@ -147,7 +147,7 @@ def get_neighbor_counts_matrix(shape, gap_large, gap_small, max_distance):
 def compute_significances(mat, upper_limit, lower_limit, num_cells, start_index, max_distance_bin):
     gc.collect()
     #sliding window
-    #print('in function')
+    print('in function')
     #sys.stdout.flush()
     big_neighborhood = skimage.util.view_as_windows(mat, (2*upper_limit+1,2*upper_limit+1,num_cells), step = 1)
     small_neighborhood = skimage.util.view_as_windows(mat, (2*lower_limit+1,2*lower_limit+1,num_cells), step = 1)
