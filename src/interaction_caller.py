@@ -110,21 +110,23 @@ def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_l
             mat = np.expand_dims(cell_mat, 2)
             if matrix_upper_bound == 0:
                 pad_size = abs(i - upper_limit)
-                mat_3d = np.pad(mat, ((pad_size, 0), (pad_size, 0), (0, 0)), mode = 'constant', constant_values = np.nan)
+                mat = np.pad(mat, ((pad_size, 0), (pad_size, 0), (0, 0)), mode = 'constant', constant_values = np.nan)
             if matrix_lower_bound == chrom_bins + 1:
                 pad_size = upper_limit #- 1
-                mat_3d = np.pad(mat, ((0, pad_size), (0, pad_size), (0, 0)), mode = 'constant', constant_values = np.nan)
+                mat = np.pad(mat, ((0, pad_size), (0, pad_size), (0, 0)), mode = 'constant', constant_values = np.nan)
             #print("starting", mat.shape)
             start_index = i
-            mat, local_neighborhood = get_mat_and_neighborhood(mat_3d, upper_limit, \
+            mat, local_neighborhood = get_mat_and_neighborhood(mat, upper_limit, \
                                                   neighborhood_limit_lower, 1, start_index, \
                                                   max_distance_bin)
+            print("returned size", mat.shape, local_neighborhood.shape)
             local_neighborhoods.append(local_neighborhood)
             #print("res", mat.shape, local_neighborhood.shape)
             mats.append(mat)
         local_neighborhoods = np.stack(local_neighborhoods, axis = -1)
         mat_3d = np.stack(mats, axis = -1)
         mat_3d = np.squeeze(mat_3d)
+        print("yielding", mat_3d.shape, local_neighborhoods.shape)
         yield mat_3d, local_neighborhoods, i
 
 def get_nth_diag_indices(mat, offset):
@@ -175,8 +177,8 @@ def get_mat_and_neighborhood(mat, upper_limit, lower_limit, num_cells, start_ind
     #big_neighborhood = np.swapaxes(big_neighborhood, -2, -1)
     big_neighborhood_counts = np.sum(~np.isnan(big_neighborhood), axis = -1)
     small_neighborhood_counts = np.sum(~np.isnan(small_neighborhood), axis = -1)
-    #print("big:", big_neighborhood.shape)
-    #print("small:", small_neighborhood.shape)
+    print("big:", big_neighborhood.shape)
+    print("small:", small_neighborhood.shape)
     #print("upper_limit, lower limit:", upper_limit, lower_limit)
 
     #sum on the last axis (sum of neighbors)
@@ -209,7 +211,7 @@ def get_mat_and_neighborhood(mat, upper_limit, lower_limit, num_cells, start_ind
     return mat, local_neighborhood
     
 def compute_significances(mat, local_neighborhood, upper_limit, lower_limit, num_cells, start_index, max_distance_bin):
-    #print("in compute:", local_neighborhood.shape, mat.shape)
+    print("in compute:", mat.shape, local_neighborhood.shape)
     #compute averages over all cells for each point and each local neighborhood
     ##print(local_neighborhood.shape, mat.shape)
     ttest_results = stats.ttest_rel(mat, local_neighborhood, axis = 2)
