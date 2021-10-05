@@ -59,8 +59,8 @@ We strongly recommend using an HPC environment where you can request multiple no
 4. Execute the run file with the modified variables, or submit it to the job scheduler. 
 
 <h4 id=matrix-inversion>3.1 Running Using Inverse Matrix</h4>  
-By default, for the calculation of the random walk values over each chromosome, a linear algebra equation is solved by computing the inverse of a large square matrix (size of the binned chromosome). This computation requires large amounts of memory and can take longer to compute.   
-As mentioned, the default method of the snapHiC utilizes this algorithm. This is achieved by setting the *method* variable in the *run_step1.sh* file to *inverse*.  
+By default, for the calculation of the random walk values over each chromosome, a linear algebra equation is solved by computing the inverse of a large square matrix (size of the binned chromosome). This computation requires large amounts of memory and can take longer to compute.
+As mentioned, the default method of the snapHiC utilizes this algorithm. This is achieved by setting the **method** variable in the *run_step1.sh* file to **inverse**.  
 
 <h4 id=sliding-window>3.2 Running Using Sliding Window</h4>  
 As an alternative to the inverse matrix computation for solving the equation to the Random Walk with Restart algorithm, the sliding_window method has been implemented. In this implementation, instead of computing the RWR values over the entire chromosome in a single step, a relatively small square window is set on the top-left corner of the large (chromosome-wide) matrix. For the elements within this window RWR values are computed, and then the window is moved by a fixed number of binpairs on the diagonal of the original matrix. This operation is repeated until the sliding window has covered the diagonal of the original matrix.   
