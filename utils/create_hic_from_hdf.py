@@ -4,10 +4,10 @@ import pandas as pd
 import glob
 import os
 
-chroms=['chr' + str(i) for i in range(1,23)]
-rwr_dir = "/oasis/tscc/scratch/abnousa/snapHiC/outputs/Ecker/L23/rwr"
-hic_dir = "/oasis/tscc/scratch/abnousa/snapHiC/outputs/Ecker/L23/hic"
-num_cells = 261 
+chroms=['chr' + str(i) for i in range(1,20)]
+rwr_dir = "/oasis/tscc/scratch/abnousa/snapHiC/outputs/fraser_binsizes/fraser_5kb_subsamples/fraser_700/rwr"
+hic_dir = "/oasis/tscc/scratch/abnousa/snapHiC/outputs/fraser_binsizes/fraser_5kb_subsamples/fraser_700/hic"
+num_cells = 700 
 
 hic_input_fname = f"{hic_dir}/allChr.hic.input"
 if os.path.exists(hic_input_fname):

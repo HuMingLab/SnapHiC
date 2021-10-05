@@ -29,14 +29,17 @@ genome="mm10"  						#genomeID that will be used for genereation of ".hic" file
 filter_file="/projects/ps-renlab/abnousa/snapHiC/ext/mm10_filter_regions.txt" 	#regions to be filtered, for example due to low mappability
 steps="bin rwr" 					#steps to run the pipeline. Recommended (1) "bin rwr" at first, (2) then  "hic interaction postprocess"
 prefix="datset_name"					#this will be used as a prefix for output file names
+method="inverse"
+rwr_window_size=200
+rwr_step_size=100
 
 ############################################################################
 
 
 if [[ "$parallelism" == "parallel" ]]; then
-	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --parallel
+	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --rwr-method $method --rwr-window-size $rwr_window_size --rwr-step-size $rwr_step_size --parallel
 elif [[ "$parallelism" == "threaded" ]]; then
-	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps  --prefix $prefix --threaded -n $number_of_processors
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps  --prefix $prefix --rwr-method $method --rwr-window-size $rwr_window_size --rwr-step-size $rwr_step_size --threaded -n $number_of_processors
 else
-	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --rwr-method $method --rwr-window-size $rwr_window_size --rwr-step-size $rwr_step_size
 fi
