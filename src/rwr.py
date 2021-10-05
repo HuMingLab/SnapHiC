@@ -434,7 +434,7 @@ def get_nth_diag_indices(mat, offset):
         cols = cols[:-offset]
     return rows, cols
 
-def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filename, binsize, remove_bins, trim = 0.01):
+def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filename, binsize, remove_bins, trim = 0.01, rwr_rank_logfile = None):
     #df_all = pd.DataFrame()
     if os.path.exists(output_filename):
         os.remove(output_filename)
@@ -478,6 +478,8 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
             df['chr2'] = chrom
             df = df[['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'v']]
             df.to_csv(f, mode='a', header=False, sep = "\t", index = False)
+    if rwr_rank_logfile:
+    	rwr_rank_logfile.write(f"{output_filename} completed\n")
         #df_all = pd.concat([df_all, df], axis = 0)
     #df_all = df_all.sort_values(['x1', 'y1'])
     #df_all.to_csv(output_filename, header = False, sep = "\t", index = False)
@@ -510,6 +512,8 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         pass
     if rwr_logfile is None:
         rwr_logfile = open(rwr_logfilename, 'a') if rwr_logfilename else None
+    rwr_rank_log_filename = os.path.join(outdir, f"{rank}_rwr_log.txt")
+    rwr_rank_logfile = open(rwr_rank_log_filename, 'a')
     #print('rwr rank', rank)
     #ignore_filename = os.path.join(outdir, 'ignore_sets.txt')
     #ammend_ignore_list(rwr_logfilename, ignore_filename)
@@ -582,7 +586,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
                 d = d[remove_bins:-remove_bins, remove_bins:-remove_bins]
                 #df = df[(df['x1'] >= 50000) & (df['y1'] <= last_bin * binsize - 50000)]
                 output_filename = os.path.join(outdir, ".".join([setname, chrom, "normalized", "rwr", "bedpe"]))
-                normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filename, binsize, remove_bins)
+                normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filename, binsize, remove_bins, rwr_rank_logfile)
                 del d
                 gc.collect()
                 df = pd.read_csv(output_filename, header = None, sep = "\t")
@@ -613,6 +617,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         #return df
     if rwr_logfile and not parallel:
         rwr_logfile.close()
+    rwr_rank_logfile.close()
 
 if __name__ == "__main__":
     pass
