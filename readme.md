@@ -4,9 +4,9 @@
 ### Contents:
 1. [Installation](#installation)
 2. [Required input files](#required-input-files)
-3. [Running SnapHiC](#running-snaphic)
-3.1 [Running using matrix inversion] (#matrix-inersion)
-3.2 [Running using sliding window and approximation] (#sliding-window)
+3. [Running SnapHiC](#running-snaphic) 
+3.1 [Running using matrix inversion] (#matrix-inersion) 
+3.2 [Running using sliding window and approximation] (#sliding-window) 
 4. [Output files](#the-output-file)
 5. [Testing SnapHiC](#testing-snaphic)
 6. [Recommendations for parallel computing](#recommendations-for-parallel-computing)
@@ -58,17 +58,18 @@ We strongly recommend using an HPC environment where you can request multiple no
 
 4. Execute the run file with the modified variables, or submit it to the job scheduler. 
 
-<h4 id=inverse-matrix>3.1 Running Using Inverse Matrix</h4>
-By default, for the calculation of the random walk values over each chromosome, a linear algebra equation is solved by computing the inverse of a large square matrix (size of the binned chromosome). This computation requires large amounts of memory and can take longer to compute. 
-As mentioned, the default method of the snapHiC utilizes this algorithm. This is achieved by setting the **method** variable in the *run_step1.sh* file to **inverse**.
-<h4 id=sliding-window>3.2 Running Using Sliding Window</h4>
-As an alternative to the inverse matrix computation for solving the equation to the Random Walk with Restart algorithm, the sliding_window method has been implemented. In this implementation, instead of computing the RWR values over the entire chromosome in a single step, a relatively small square window is set on the top-left corner of the large (chromosome-wide) matrix. For the elements within this window RWR values are computed, and then the window is moved by a fixed number of binpairs on the diagonal of the original matrix. This operation is repeated until the sliding window has covered the diagonal of the original matrix. 
-To run the snapHiC pipeline using the sliding window method, three variables should be set in the *run_step1.sh* file: 
-1. method: This should be set to **sliding_window**, otherwise the **inverse** method will be used. 
-2. rwr_window_size: This variable specifies the size of the small sliding window that moves over the diagonal of the larger window. By default, this value is set to 200. 
-3. rwr_setp_size: This specifies the number of binpairs on the diagonal that the sliding window jumps at each step of the computation. This value should be smaller than the **rwr_window_size**. By default, this value is set to 100.
+<h4 id=inverse-matrix>3.1 Running Using Inverse Matrix</h4>  
+By default, for the calculation of the random walk values over each chromosome, a linear algebra equation is solved by computing the inverse of a large square matrix (size of the binned chromosome). This computation requires large amounts of memory and can take longer to compute.  
+As mentioned, the default method of the snapHiC utilizes this algorithm. This is achieved by setting the **method** variable in the *run_step1.sh* file to **inverse**.  
 
-<h3 id=the-output-file>4. Output files</h3> 
+<h4 id=sliding-window>3.2 Running Using Sliding Window</h4>  
+As an alternative to the inverse matrix computation for solving the equation to the Random Walk with Restart algorithm, the sliding_window method has been implemented. In this implementation, instead of computing the RWR values over the entire chromosome in a single step, a relatively small square window is set on the top-left corner of the large (chromosome-wide) matrix. For the elements within this window RWR values are computed, and then the window is moved by a fixed number of binpairs on the diagonal of the original matrix. This operation is repeated until the sliding window has covered the diagonal of the original matrix.   
+To run the snapHiC pipeline using the sliding window method, three variables should be set in the *run_step1.sh* file:  
+1. method: This should be set to **sliding_window**, otherwise the **inverse** method will be used. 
+2. rwr_window_size: This variable specifies the size of the small sliding window that moves over the diagonal of the larger window. By default, this value is set to 200.   
+3. rwr_setp_size: This specifies the number of binpairs on the diagonal that the sliding window jumps at each step of the computation. This value should be smaller than the **rwr_window_size**. By default, this value is set to 100.  
+
+<h3 id=the-output-file>4. Output files</h3>  
 
 The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* is the name of the dateset, which is provided via the **--prefix** argument. If user does not provide the **--prefix** argument, * will be replaced with *combined*). This tab-separated file includes the following 17 columns:  
 - chr1, x1, x2, chr2, y1, y2: the start and end position of a loop. 
