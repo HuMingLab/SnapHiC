@@ -4,9 +4,10 @@
 ### Contents:
 1. [Installation](#installation)
 2. [Required input files](#required-input-files)
-3. [Running SnapHiC](#running-snaphic) 
-3.1 [Running using matrix inversion] (#matrix-inersion) 
-3.2 [Running using sliding window and approximation] (#sliding-window) 
+3. [Running SnapHiC](#running-snaphic)    
+
+3.1 [Running using matrix inversion] (#matrix-inersion)   
+3.2 [Running using sliding window and approximation] (#sliding-window)   
 4. [Output files](#the-output-file)
 5. [Testing SnapHiC](#testing-snaphic)
 6. [Recommendations for parallel computing](#recommendations-for-parallel-computing)
