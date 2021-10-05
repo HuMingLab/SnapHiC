@@ -141,6 +141,7 @@ For any questions, comments and suggestions regarding SnapHiC, please submit an 
 
 <h3 id=citation>10. Citation</h3>
 
-If you use SnapHiC, please cite our paper at Nature Methods: https://www.nature.com/articles/s41592-021-01231-2.
+-If you use SnapHiC, please cite our paper at Nature Methods: https://www.nature.com/articles/s41592-021-01231-2. 
 
-Miao Yu, Armen Abnousi, Yanxiao Zhang, Guoqiang Li, Lindsay Lee, Ziyin Chen, Rongxin Fang, Taylor M. Lagler, Yuchen Yang, Jia Wen, Quan Sun, Yun Li, Bing Ren and Ming Hu (2021). SnapHiC: a computational pipeline to identify chromatin loops from single cell Hi-C data. Nature Methods. doi: https://doi.org/10.1038/s41592-021-01231-2. 
+-Miao Yu, Armen Abnousi, Yanxiao Zhang, Guoqiang Li, Lindsay Lee, Ziyin Chen, Rongxin Fang, Taylor M. Lagler, Yuchen Yang, Jia Wen, Quan Sun, Yun Li, Bing Ren and Ming Hu (2021). SnapHiC: a computational pipeline to identify chromatin loops from single cell Hi-C data. Nature Methods. doi: https://doi.org/10.1038/s41592-021-01231-2. 
+
