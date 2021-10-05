@@ -58,7 +58,7 @@ We strongly recommend using an HPC environment where you can request multiple no
 
 4. Execute the run file with the modified variables, or submit it to the job scheduler. 
 
-<h4 id=inverse-matrix>3.1 Running Using Inverse Matrix</h4>  
+<h4 id=matrix-inversion>3.1 Running Using Inverse Matrix</h4>  
 By default, for the calculation of the random walk values over each chromosome, a linear algebra equation is solved by computing the inverse of a large square matrix (size of the binned chromosome). This computation requires large amounts of memory and can take longer to compute.  
 As mentioned, the default method of the snapHiC utilizes this algorithm. This is achieved by setting the **method** variable in the *run_step1.sh* file to **inverse**.  
 
