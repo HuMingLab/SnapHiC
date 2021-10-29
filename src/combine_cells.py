@@ -23,6 +23,8 @@ def combine_and_reformat_chroms(indir, output_filename, chrom, outlier_threshold
     #print('opening hdfs', chrom)
     #sys.stdout.flush()
     hdf_file = h5py.File(output_filename + ".cells.hdf", 'a')
+    names_dataset = hdf_file.create_dataset('cellnames', (1,len(input_filenames)),'S1000')
+    names_dataset[0,:] = [os.path.basename(fname).encode("ascii", "ignore") for fname in input_filenames]
     cells_data = hdf_file.create_dataset(chrom, chunks = (100000, len(input_filenames)), shape = (0, len(input_filenames)), \
                                                maxshape = (None, len(input_filenames)))        
 

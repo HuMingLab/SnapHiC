@@ -586,7 +586,7 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
                 d = d[remove_bins:-remove_bins, remove_bins:-remove_bins]
                 #df = df[(df['x1'] >= 50000) & (df['y1'] <= last_bin * binsize - 50000)]
                 output_filename = os.path.join(outdir, ".".join([setname, chrom, "normalized", "rwr", "bedpe"]))
-                normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filename, binsize, remove_bins, rwr_rank_logfile)
+                normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filename, binsize, remove_bins, rwr_rank_logfile = rwr_rank_logfile)
                 del d
                 gc.collect()
                 df = pd.read_csv(output_filename, header = None, sep = "\t")

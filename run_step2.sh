@@ -13,6 +13,10 @@
 #cd ${PBS_O_WORKDIR}
 #module load python/3.6.1
 
+## Required for cooler:
+export LC_ALL=en_US.utf-8
+export LANG=en_US.utf-8
+
 ############################################################################
 ###                            User Variables                            ###
 ############################################################################

@@ -62,7 +62,9 @@ def convert_sparse_dataframe_to_dense_matrix(d, mat_size, dist, binsize, upper_l
         #print(d_portion, 'd_portions shape')
         #skiprows = all_rows.difference(keeprows)
         hdf_file = h5py.File(chrom_filename + '.cells.hdf', 'r')
-        portion = hdf_file[list(hdf_file.keys())[0]]
+        keynames = list(hdf_file.keys())
+        keyname = keynames[0] if keynames[0] != "cellnames" else keynames[1]
+        portion = hdf_file[keyname]
         #print(type(keeprows))
         #if isinstance(keeprows, list):
         #    print(len(keeprows))

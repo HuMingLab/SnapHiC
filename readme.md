@@ -1,5 +1,5 @@
 # SnapHiC: Single nucleus analysis pipeline for Hi-C data 
-#### (Latest updates: December 7th, 2020, version 0.1.0)
+#### (Latest updates: October 29th, 2021, version 0.2.0)
 ## Identifying chromatin loops from single cell Hi-C data
 ### Contents:
 1. [Installation](#installation)

@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from src.bin_reads import bin_sets
 from src.rwr import get_rwr_for_all
 from src.combine_cells import combine_cells, combine_chrom_hic
@@ -9,6 +10,7 @@ import glob
 import pandas as pd
 import multiprocessing
 import src.logger
+import utils.validate_rwr
 
 def main():
     parser = create_parser()
@@ -116,6 +118,13 @@ def main():
     #step 3; combine cells
     hic_dir = os.path.join(args.outdir, "hic")
     if 'hic' in args.steps:
+        logger.write("Checking for completion of the RWR step")
+        if rank == 0:
+            rwr_is_complete = utils.validate_rwr.validate_before_combine(args.outdir, len(chrom_dict))
+            if not rwr_is_complete:
+                print("RWR check failed! remove the files specified in rwr/missing.txt file and re-run the rwr step")
+		
+        logger.write("RWR check completed successfully!")
         logger.write('Combining cell-wise RWRs and generating input for juicertools pre command')
         logger.flush()
         if parallel_mode == 'nonparallel':
@@ -373,6 +382,5 @@ def create_parser():
                         help = "number of adjacent binpairs on the diagonal of the sliding window that will be skipped in each consecutive step (if sliding window method is chosen")
     return parser
     
-
 if __name__ == "__main__":
     main()

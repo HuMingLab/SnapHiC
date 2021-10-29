@@ -518,6 +518,35 @@ def cluster_candidates(outdir, proc_chroms, clustering_gap, binsize, summit_gap,
         logger.write(f'\tprocessor {rank}: postprocessing of {chrom} completed', \
                              append_time = False, allow_all_ranks = True, verbose_level = 2)
 
+def append_zscores(outdir, proc_chroms):
+    for chrom in proc_chroms:
+        peak_file = os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"]))
+        rwr_filenames = glob.glob(os.path.join(outdir, "..", "rwr", f"*.{chrom}.normalized.rwr.bedpe"))
+        if len(rwr_filenames) > 0 and os.path.exists(peak_file):
+            peaks = pd.read_csv(peak_file, "\t")
+            peaks = peaks[(peaks['cluster_size'] > 1) & (peaks['summit'] == 1)]
+            rwr_filename = rwr_filenames[0]
+            colnames = ['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'rwr']
+            rwr_df = pd.read_csv(rwr_filename, sep = "\t", names = colnames)
+            rwr_df['row_index'] = list(range(rwr_df.shape[0]))
+            rwr_df = rwr_df[['row_index', 'x1', 'y1']]
+            peaks = peaks.merge(rwr_df, on = ['x1', 'y1'], sort = False)
+            hic_chrom_filename = os.path.join(outdir, "..", "hic", ".".join([chrom, "normalized", "combined", "bedpe"]))
+            with h5py.File(hic_chrom_filename + ".cells.hdf", 'r') as ifile:
+                zscores = ifile[chrom]
+                zscores = np.array(zscores[peaks['row_index'], :])
+                cellnames = np.array(ifile['cellnames'])
+                cellnames = [cellnames[0,i].decode('ascii') for i in range(cellnames.shape[1])]
+            #print(peaks.shape, zscores.shape)
+            if len(zscores.shape) == 1:
+                zscores = zscores.reshape((1, zscores.shape[0]))
+            zscores = pd.DataFrame(zscores)
+            zscores.columns = cellnames
+            peaks = peaks.drop('row_index', axis = 1)
+            output = pd.concat([peaks, zscores], axis = 1)
+            outfile = os.path.join(outdir, ".".join(["zscores", chrom, "summits", "bedpe"]))
+            output.to_csv(outfile, index = False, sep = "\t")
+
 def postprocess(indir, outdir, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
                     candidate_upper_thresh, binsize, dist, clustering_gap, rank, n_proc, max_mem, \
                     tstat_threshold, circle_threshold_mult, donut_threshold_mult, \
@@ -535,4 +564,4 @@ def postprocess(indir, outdir, chrom_lens, fdr_thresh, gap_large, gap_small, can
                     horizontal_threshold_mult, vertical_threshold_mult, outlier_threshold_mult, filter_file, logger, rank)
     #cluster_peaks(outdir, proc_chroms, clustering_gap, binsize, summit_gap, logger, rank)
     cluster_candidates(outdir, proc_chroms, clustering_gap, binsize, summit_gap, logger, rank)
-   
+    append_zscores(outdir, proc_chroms)
