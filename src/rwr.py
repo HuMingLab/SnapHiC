@@ -462,9 +462,10 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
             #print('musd')
             #print(mu, sd)
             #vals_orig = vals_orig[0][:]
-            vals_orig = (np.array(vals_orig) - mu) / sd
             if sd < 1e-6:
                 vals_orig = [0] * len(vals_orig)
+            else:
+                vals_orig = (np.array(vals_orig) - mu) / sd
                 #print(len(vals_orig))
             #print(offset,mu,sd,max(vals_orig))
             #print(vals_orig[:5])

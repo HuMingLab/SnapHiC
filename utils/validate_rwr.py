@@ -23,7 +23,9 @@ def validate_before_combine(outdir, chroms_count):
     all_bedpes = len(glob.glob(f'{outdir}/rwr/*.normalized.rwr.bedpe'))
     input_count = len(glob.glob(f'{outdir}/binned/*.bedpe')) 
     expected_count = input_count * chroms_count
-    if completes_count >= expected_count and incompletes_count == 0:
+    if completes_count >= expected_count: 
+        if incompletes_count != 0:
+            return "warning"
         return True
     else:
         raise Exception(f"RWR is not completed correctly! Please remove the files specified in rwr/missing.txt and re-run the rwr step. expected={expected_count}, completed={completes_count}!")

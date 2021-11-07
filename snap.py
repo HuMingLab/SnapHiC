@@ -121,7 +121,9 @@ def main():
         logger.write("Checking for completion of the RWR step")
         if rank == 0:
             rwr_is_complete = utils.validate_rwr.validate_before_combine(args.outdir, len(chrom_dict))
-            if not rwr_is_complete:
+            if rwr_is_complete == "warning":
+                logger.write("WARNING: rwr and input file counts match but there were unidentified files in the rwr directory. Please check the files listed in rwr/missing.txt to ensure their validity")
+            elif not rwr_is_complete:
                 print("RWR check failed! remove the files specified in rwr/missing.txt file and re-run the rwr step")
 		
         logger.write("RWR check completed successfully!")
