@@ -3,7 +3,8 @@ import sys
 import glob
 
 def find_incomplete_files(outdir):
-    input_filenames = set(glob.glob(f'{outdir}/rwr/*.normalized.rwr.bedpe'))
+    input_filenames = glob.glob(f'{outdir}/rwr/*.normalized.rwr.bedpe')
+    input_filenames = set([fname.replace("//", "/") for fname in input_filenames])
     log_files = glob.glob(f'{outdir}/rwr/[0-9]*_rwr_log.txt')
     completed_files = []
     for logfile in log_files:
@@ -11,6 +12,7 @@ def find_incomplete_files(outdir):
             llines = lfile.readlines()
             rank_files = [line.split(' ')[0] for line in llines if len(line.split(' ')) == 2]
         completed_files += rank_files
+    completed_files = [cfile.replace("//","/") for cfile in completed_files]
     completed_files = set(completed_files)
     incomplete_files = input_filenames.difference(completed_files)
     print(f'{len(incomplete_files)} files have been detected to have faulty rwr files. Check the missig.txt file for a list of their names.')
