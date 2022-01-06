@@ -56,13 +56,13 @@ def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM
     if method == "sliding_window":
         r = sp.sparse.coo_matrix(((0,), ((0,), (0,))), shape = (NUM, NUM)).todense()
         #r = pd.DataFrame({'i':r.row, 'j': r.col, 'v': r.data})
-        print("NUM", NUM)
+        #print("NUM", NUM)
         for window_start in range(0, NUM + rwr_window_size, rwr_step_size):
             window_end = window_start + rwr_window_size
             window_edges = edgelist[(edgelist['x1'] >= window_start) & (edgelist['y1'] < window_end)]
             defaults = pd.DataFrame({'x1':list(range(window_start, min(NUM-1, window_end - 1))), 'y1': list(range(window_start+1, min(NUM, window_end)))})
             if defaults.shape[0] == 0:
-                print("skipping", window_edges.head())
+                #print("skipping", window_edges.head())
                 continue
             edges = pd.concat([defaults[['x1', 'y1']], window_edges[['x1', 'y1']]], axis = 0)
             edges.loc[:,'weight'] = 1
@@ -76,9 +76,9 @@ def get_rwr_en(edge_filename, binsize = BIN, distance = DIST, chrom = list(CHROM
             partial_r = partial_r[(partial_r['i'] + partial_r['j'] > rwr_step_size) & (partial_r['i'] + partial_r['j'] < rwr_window_size + rwr_step_size)]
             #partial_r = partial_r[(partial_r['i'] + partial_r['j'] < rwr_window_size + rwr_step_size)]
             partial_r = partial_r[(partial_r['j'] - partial_r['i'] < rwr_window_size)]
-            print("this is the partial output:", window_start)
-            print(partial_r.describe())
-            print(partial_r.head())
+            #print("this is the partial output:", window_start)
+            #print(partial_r.describe())
+            #print(partial_r.head())
             partial_r['i'] += window_start
             partial_r['j'] += window_start
             #old_r = pd.merge(r, partial_r, on = ['i', 'j'], how = "outer", suffixes = ["", "_2"], indicator = True)
@@ -152,7 +152,7 @@ def get_laplacian_matrix_from_edgelist(edgelist):
     g = nx.from_pandas_edgelist(edgelist, source = 'x1', target = 'y1', edge_attr = ['weight'], create_using = nx.Graph())
     degrees = 1/np.array([g.degree(i) for i in g.nodes()])
     degrees = sp.sparse.diags(degrees, shape = (degrees.shape[0], degrees.shape[0]))
-    print("deg", degrees.shape)
+    #print("deg", degrees.shape)
     m = sp.sparse.csc_matrix(nx.adjacency_matrix(g).astype(float))
     degrees = np.sqrt(degrees)
     m = degrees @ m @ degrees
@@ -204,7 +204,7 @@ def solve_rwr_iterative(stoch_matrix, alpha = ALPHA, final_try = False, setname 
     #print(m.todense()[:4,:4])
     counter = 0
     while delta > 1e-6 and counter < max_iter:
-        print(delta, counter)
+        #print(delta, counter)
         counter += 1
         Aold = A.copy()
         A = (1-alpha) * m * Aold + (alpha) * y
@@ -438,13 +438,16 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
     #df_all = pd.DataFrame()
     if os.path.exists(output_filename):
         os.remove(output_filename)
+    #f2 = open(output_filename + ".nonnorm", 'a')
     with open(output_filename, "a") as f:
         for offset in range(1, max_bin_distance + 1):
             r, c = get_nth_diag_indices(d, offset)
             vals_orig = d[r,c].tolist()
-
+            
             if isinstance(vals_orig[0], list):
                 vals_orig = vals_orig[0]
+            #df = pd.DataFrame({'x1': r, 'y1': c, 'v': vals_orig})
+            #df.to_csv(f2, mode='a', header=False, sep = "\t", index = False)
             #print(type(vals_orig))
             #print(type(vals_orig[0]))
             #print(len(vals_orig))
@@ -479,6 +482,7 @@ def normalize_along_diagonal_from_numpy(d, chrom, max_bin_distance, output_filen
             df['chr2'] = chrom
             df = df[['chr1', 'x1', 'x2', 'chr2', 'y1', 'y2', 'v']]
             df.to_csv(f, mode='a', header=False, sep = "\t", index = False)
+    #f2.close()
     if rwr_rank_logfile:
     	rwr_rank_logfile.write(f"{output_filename} completed\n")
         #df_all = pd.concat([df_all, df], axis = 0)

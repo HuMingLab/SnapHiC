@@ -196,6 +196,7 @@ def get_mat_and_neighborhood(mat, upper_limit, lower_limit, num_cells, start_ind
     #local_neighborhood
     local_neighborhood = big_neighborhood - small_neighborhood
     local_neighborhood_counts = big_neighborhood_counts - small_neighborhood_counts
+    print("bn:", big_neighborhood_counts, "sn:", small_neighborhood_counts, "ln:", local_neighborhood_counts, 'ul:', upper_limit, 'll:', lower_limit, 'si:', start_index)
     #local_neighbors_count = (((upper_limit*2+1) ** 2 - (lower_limit*2+1) ** 2) - (upper_limit*2+1) + (lower_limit*2+1))/2
     del small_neighborhood, big_neighborhood, big_neighborhood_counts, small_neighborhood_counts
     gc.collect()

@@ -531,10 +531,12 @@ def append_zscores(outdir, proc_chroms):
             rwr_df['row_index'] = list(range(rwr_df.shape[0]))
             rwr_df = rwr_df[['row_index', 'x1', 'y1']]
             peaks = peaks.merge(rwr_df, on = ['x1', 'y1'], sort = False)
+            peaks = peaks.sort_values(by=['row_index'])
             hic_chrom_filename = os.path.join(outdir, "..", "hic", ".".join([chrom, "normalized", "combined", "bedpe"]))
             with h5py.File(hic_chrom_filename + ".cells.hdf", 'r') as ifile:
                 zscores = ifile[chrom]
                 zscores = np.array(zscores[peaks['row_index'], :])
+
                 cellnames = np.array(ifile['cellnames'])
                 cellnames = [cellnames[0,i].decode('ascii') for i in range(cellnames.shape[1])]
             #print(peaks.shape, zscores.shape)
