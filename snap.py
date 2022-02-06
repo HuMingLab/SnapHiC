@@ -93,7 +93,7 @@ def main():
                             rwr_logfilename = rwr_logfilename, threaded_lock = None, logger = logger, \
                             keep_rwr_matrix = args.keep_rwr_matrix, rwr_method = args.rwr_method, 
                             blin_partitions = args.blin_partitions, max_iter = args.max_iter,
-                            rwr_window_size = args.rwr_window_size, rwr_step_size = args.rwr_step_size)
+                            rwr_window_size = args.rwr_window_size, rwr_step_size = args.rwr_step_size, mpi_comm = parallel_properties['comm'])
             #print(rank, 'waiting for other processes')
             rwr_logfile.Close()
             parallel_properties['comm'].Barrier()

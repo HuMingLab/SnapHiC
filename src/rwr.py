@@ -9,6 +9,7 @@ import sys
 import random
 from collections import deque
 import gc
+import glob
 #import dask
 #import dask.array
 #import scikits.umfpack
@@ -501,11 +502,31 @@ def keep_eligible_distance(d, dist, binsize):
     #print(d[0, 198:208])
     return d
 
+def determine_window_size(indir):
+    cellnames = glob.glob(os.path.join(indir, "*.bedpe"))
+    total_count = 0
+    dists = [10e6,20e6,30e6,40e6,50e6,60e6,70e6,80e6,90e6,100e6]
+    range_count = {i:0 for i in dists}
+    for cell in cellnames:
+        d = pd.read_csv(cell, sep = "\t", header = None, names = ['c1','x1','x2','c2','y1','y2'])
+        total_count += d.shape[0]
+        for dist in dists[::-1]:
+            d = d[d['y1'] - d['x1'] < dist]
+            range_count[dist] += d.shape[0]
+    #print("total_count=",total_count)
+    #print("range_counts:", range_count)
+    for dist in dists:
+        frac = range_count[dist] / total_count
+        if frac > 0.8:
+            return int(dist)
+    return None
+        
+
 def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = DIST, chrom_lens = CHROM_DICT, 
                 normalize = False, n_proc = 1, rank = 0, genome = 'mouse', filter_file = None, parallel = False, 
                                 rwr_logfile = None, rwr_logfilename = None, threaded_lock = None, logger = None,
                                  keep_rwr_matrix = False, rwr_method = "inverse", blin_partitions = 100, max_iter = 100,
-                                 rwr_window_size = 200, rwr_step_size = 100):
+                                 rwr_window_size = 200, rwr_step_size = 100, mpi_comm = None):
     if logger:
         logger.set_rank(rank)
     if not outdir:
@@ -519,7 +540,24 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
         rwr_logfile = open(rwr_logfilename, 'a') if rwr_logfilename else None
     rwr_rank_log_filename = os.path.join(outdir, f"{rank}_rwr_log.txt")
     rwr_rank_logfile = open(rwr_rank_log_filename, 'a')
-    #print('rwr rank', rank)
+    if rwr_method == "sliding_window":
+        logger.write("computing sliding window size")
+        if rank == 0:
+            rwr_window_size = determine_window_size(indir)
+        if parallel:
+            mpi_comm.Barrier()
+            rwr_window_size = mpi_comm.bcast(rwr_window_size, root=0)
+        assert rwr_window_size % binsize == 0, "binsize should be a dividend of 10e6"
+        rwr_window_size //= binsize
+        logger.write(f"sliding window size is set to {rwr_window_size}")
+        if rwr_window_size:
+            rwr_step_size = int(rwr_window_size // 2)
+        else:
+            logger.write("WARNING: read count is too low for sliding window; will use inverse matrix")
+            rwr_method = "inverse"
+    rwr_step_size = int(rwr_step_size)
+    rwr_window_size = int(rwr_window_size)
+    #print('rwr rank', rank, 'rwr_Step_size', rwr_step_size)
     #ignore_filename = os.path.join(outdir, 'ignore_sets.txt')
     #ammend_ignore_list(rwr_logfilename, ignore_filename)
     #ignore_sets = get_ignore_list(ignore_filename)
