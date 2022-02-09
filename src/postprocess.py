@@ -289,6 +289,17 @@ def combine_postprocessed_chroms(directory, prefix):
     all_candidates.to_csv(output_filename, sep = "\t", index = False)
     summits.to_csv(summits_filename, sep = "\t", index = False)
 
+    ###combine zscore files
+    fnames = glob.glob(os.path.join(directory, "zscores.chr*.summits.bedpe"))
+    allchr = pd.DataFrame()
+    for fname in fnames:
+        d = pd.read_csv(fname, sep = "\t")
+        if allchr.shape[0] == 0:
+            allchr = d
+        else:
+            allchr = pd.concat([allchr, d], axis = 0)
+    allchr.to_csv(os.path.join(directory, ".".join(["zscores", prefix, "summits", "bedpe"])), sep = "\t", index = False)
+
 def label_propagate(dist_matrix_binary):
     temp_labels = np.argmax(dist_matrix_binary, axis = 1)
     peak_to_label = {i: temp_labels[i] for i in range(dist_matrix_binary.shape[0])}
@@ -519,6 +530,7 @@ def cluster_candidates(outdir, proc_chroms, clustering_gap, binsize, summit_gap,
                              append_time = False, allow_all_ranks = True, verbose_level = 2)
 
 def append_zscores(outdir, proc_chroms):
+    #allchr = pd.DataFrame()
     for chrom in proc_chroms:
         peak_file = os.path.join(outdir, ".".join(["clustered", "candidates", chrom, "bedpe"]))
         rwr_filenames = glob.glob(os.path.join(outdir, "..", "rwr", f"*.{chrom}.normalized.rwr.bedpe"))
@@ -548,6 +560,11 @@ def append_zscores(outdir, proc_chroms):
             output = pd.concat([peaks, zscores], axis = 1)
             outfile = os.path.join(outdir, ".".join(["zscores", chrom, "summits", "bedpe"]))
             output.to_csv(outfile, index = False, sep = "\t")
+            #if allchr.shape[0] == 0:
+            #    allchr = output
+            #else:
+            #    allchr = pd.concat([allchr, output], axis = 0)
+    #allchr.to_csv(os.path.join(outdir, ".".join(["zscores", "combined", "summits", "bedpe"])), sep = "\t", index = False)
 
 def postprocess(indir, outdir, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
                     candidate_upper_thresh, binsize, dist, clustering_gap, rank, n_proc, max_mem, \
