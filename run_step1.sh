@@ -1,9 +1,9 @@
 #!/bin/bash
 #PBS -q hotel
 #PBS -N snHiC_s1
-#PBS -l nodes=10:ppn=3
+#PBS -l nodes=5:ppn=10
 #PBS -l walltime=50:00:00
-#PBS -l mem=1000GB
+#PBS -l mem=100GB
 #PBS -j oe
 #PBS -o log.${PBS_JOBNAME}.${PBS_JOBID}.log
 
@@ -22,7 +22,7 @@ export LANG=en_US.utf-8
 ############################################################################
 snapHiC_dir="/projects/ps-renlab/abnousa/snapHiC"	#where the snapHiC is located on your system
 parallelism="parallel" 					#options are "parallel" "threaded" "singleproc"
-number_of_processors=30   				#required only if parallelism is set to parallel or threaded
+number_of_processors=50   				#required only if parallelism is set to parallel or threaded
 indir="" 						#directory containing input files (e.g. *.pairs files)
 suffix="" 						#all input files should have the same suffix. it can be an empty string "", or ".txt"
 outdir="" 						#directory where output files will be stored
@@ -32,18 +32,16 @@ chrlen="/projects/ps-renlab/abnousa/snapHiC/ext/mm10.chrom.sizes" 		#path to the
 genome="mm10"  						#genomeID that will be used for genereation of ".hic" file 
 filter_file="/projects/ps-renlab/abnousa/snapHiC/ext/mm10_filter_regions.txt" 	#regions to be filtered, for example due to low mappability
 steps="bin rwr" 					#steps to run the pipeline. Recommended (1) "bin rwr" at first, (2) then  "hic interaction postprocess"
-prefix="datset_name"					#this will be used as a prefix for output file names
-method="inverse"
-rwr_window_size=200
-rwr_step_size=100
+prefix="dataset_name"					#this will be used as a prefix for output file names
+method="sliding_window"                                 #method for RWR computation, use inverse for chromosome-wide computation and "sliding_window" for faster computation
 
 ############################################################################
 
 
 if [[ "$parallelism" == "parallel" ]]; then
-	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --rwr-method $method --rwr-window-size $rwr_window_size --rwr-step-size $rwr_step_size --parallel
+	mpirun -np $number_of_processors python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --rwr-method $method --parallel
 elif [[ "$parallelism" == "threaded" ]]; then
-	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps  --prefix $prefix --rwr-method $method --rwr-window-size $rwr_window_size --rwr-step-size $rwr_step_size --threaded -n $number_of_processors
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps  --prefix $prefix --rwr-method $method --threaded -n $number_of_processors
 else
-	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --rwr-method $method --rwr-window-size $rwr_window_size --rwr-step-size $rwr_step_size
+	python $snapHiC_dir/snap.py -i $indir -s $suffix -o $outdir -c $chrs -p $pos -l $chrlen -g $genome --filter-file $filter_file --steps $steps --prefix $prefix --rwr-method $method
 fi

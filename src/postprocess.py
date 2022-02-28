@@ -9,6 +9,7 @@ from scipy.spatial import distance
 from collections import defaultdict
 import subprocess
 import h5py
+import tarfile
 
 def get_proc_chroms(chrom_lens, rank, n_proc):
     chrom_list = [(k, chrom_lens[k]) for k in list(chrom_lens.keys())]
@@ -565,6 +566,15 @@ def append_zscores(outdir, proc_chroms):
             #else:
             #    allchr = pd.concat([allchr, output], axis = 0)
     #allchr.to_csv(os.path.join(outdir, ".".join(["zscores", "combined", "summits", "bedpe"])), sep = "\t", index = False)
+
+def compress_and_remove_rwr_files(directory):
+    rwr_dir = os.path.join(directory, "..", "rwr")
+    tarf = tarfile.open(os.path.join(rwr_dir, "rwr.normalized.all.tar.gz"), "w:gz")
+    fnames = glob.glob(os.path.join(rwr_dir, "*.normalized.rwr.bedpe"))
+    for fname in fnames:
+        tarf.add(fname)
+        os.remove(fname)
+    tarf.close() 
 
 def postprocess(indir, outdir, chrom_lens, fdr_thresh, gap_large, gap_small, candidate_lower_thresh, \
                     candidate_upper_thresh, binsize, dist, clustering_gap, rank, n_proc, max_mem, \

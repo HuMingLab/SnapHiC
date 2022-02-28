@@ -13,3 +13,7 @@ version 0.2.1
 - bug fix for sliding window
 - adaptive sliding window size: window size being determined by "0.8 < reads_within_range/total_reads" condition
 - zscore for summits being aggregated into a single file from all chromosomes
+
+version 0.2.2
+- arguments for slidign window removed (adaptive sliding window)
+- added an option for compressing and removing normalized rwr files

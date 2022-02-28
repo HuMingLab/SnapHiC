@@ -67,6 +67,9 @@ As an alternative to the inverse matrix computation for solving the equation to 
  
 To run the snapHiC pipeline using the sliding window method, the "method" variable in the *run_step1.sh* file should be set to **sliding_window**, otherwise the **inverse** (inverse matrix for the entire chromosome) method will be used. The sliding window size is determined adaptively by the algorithm. Step size for sliding windows is set to 0.5 of the sliding window size.  
 
+Please note that RWR step will generate a bedpe file per chromosome, per cell. This may require large storage capacity. These files are intermediate files, and the user is recommended to remove or compress these files once the software has finished running and the final interaction summits have been outputted. We have provided an optional argument to perform this task (compress normalized RWR files into a *.tar.gz* file and remove the bedpe files. To use this option, please provide the **--compress-rwr** option in the run command. This operation can take a long time to run.   
+
+
 <h3 id=the-output-file>4. Output files</h3>  
 
 The SnapHiC-identified chromatin loops are stored in the file: *<outdir>/postprocessed/\*.postprocessed.summits.bedpe*. (* is the name of the dateset, which is provided via the **--prefix** argument. If user does not provide the **--prefix** argument, * will be replaced with *combined*). This tab-separated file includes the following 17 columns:  
