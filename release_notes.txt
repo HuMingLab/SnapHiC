@@ -17,3 +17,6 @@ version 0.2.1
 version 0.2.2
 - arguments for slidign window removed (adaptive sliding window)
 - added an option for compressing and removing normalized rwr files
+
+version 0.2.3
+- bugfix: in threaded mode window size determination for rwr sliding window method is fixed 

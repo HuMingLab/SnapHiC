@@ -542,11 +542,15 @@ def get_rwr_for_all(indir, outdir = None, binsize = BIN, alpha = ALPHA, dist = D
     rwr_rank_logfile = open(rwr_rank_log_filename, 'a')
     if rwr_method == "sliding_window":
         logger.write("computing sliding window size")
-        if rank == 0:
-            rwr_window_size = determine_window_size(indir)
         if parallel:
-            mpi_comm.Barrier()
-            rwr_window_size = mpi_comm.bcast(rwr_window_size, root=0)
+            if rank == 0:
+                rwr_window_size = determine_window_size(indir)
+            else:
+                mpi_comm.Barrier()
+                rwr_window_size = mpi_comm.bcast(rwr_window_size, root=0)
+        else:
+            rwr_window_size = determine_window_size(indir)
+        assert rwr_window_size is not None, "window size could not be determined; try inverse method for rwr"
         assert rwr_window_size % binsize == 0, "binsize should be a dividend of 10e6"
         rwr_window_size //= binsize
         logger.write(f"sliding window size is set to {rwr_window_size}")
